@@ -5,4 +5,5 @@
 #
 
 PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/evolution_ferrari.mk \
     $(LOCAL_DIR)/lineage_ferrari.mk
