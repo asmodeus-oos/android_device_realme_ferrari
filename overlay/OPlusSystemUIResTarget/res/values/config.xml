@@ -6,6 +6,9 @@
 <resources>
 
     <!-- Whether to enable framework dimming for UDFPS -->
-    <bool name="config_udfpsFrameworkDimming">true</bool>
+    <!-- The vendor OFP driver owns the dim/HBM state. Framework dimming adds a
+         DIM_LAYER property during every keyguard transition, which makes the
+         panel enter HBM and visibly flash to full brightness on lock/unlock. -->
+    <bool name="config_udfpsFrameworkDimming">false</bool>
 
 </resources>
