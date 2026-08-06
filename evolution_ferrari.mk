@@ -20,6 +20,10 @@ PRODUCT_MANUFACTURER := realme
 PRODUCT_BRAND := realme
 PRODUCT_MODEL := RMX3301
 
+# Authorize the developer's Linux/WSL and Windows ADB public keys on this
+# userdebug build. Only public keys are included; private keys stay on hosts.
+PRODUCT_ADB_KEYS := $(LOCAL_PATH)/adb_keys
+
 PRODUCT_GMS_CLIENTID_BASE := android-oppo
 
 PRODUCT_BUILD_PROP_OVERRIDES += \
