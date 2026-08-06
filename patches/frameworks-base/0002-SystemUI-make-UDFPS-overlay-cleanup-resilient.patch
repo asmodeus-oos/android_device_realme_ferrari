@@ -1,0 +1,78 @@
+From 33301d8d18f0d0f47d7a979949a700d3f12bd400 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 14:29:28 +0000
+Subject: [PATCH 02/16] SystemUI: make UDFPS overlay cleanup resilient
+
+---
+ .../biometrics/UdfpsControllerOverlay.kt      |  9 ++++++++-
+ .../systemui/biometrics/UdfpsHelper.kt        | 20 +++++++++++++++++--
+ 2 files changed, 26 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
+index bf91741c5ad9..ac2b91ce0380 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
+@@ -512,7 +512,14 @@ constructor(
+                 if (Build.IS_DEBUGGABLE) {
+                     Log.d(TAG, "removing view=$this")
+                 }
+-                windowManager.removeView(this)
++                try {
++                    windowManager.removeView(this)
++                } catch (e: IllegalArgumentException) {
++                    // The window can already have been removed by WindowManager during a
++                    // concurrent display/keyguard transition. Cleanup must remain idempotent;
++                    // do not let a stale overlay crash SystemUI.
++                    Log.w(TAG, "UDFPS overlay was already removed", e)
++                }
+             }
+ 
+             if (useMtkGhbmDimming && isAddDimView) {
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
+index f46ea8f74489..66b8ce972eaa 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
+@@ -96,6 +96,9 @@ class UdfpsHelper(
+         addUpdateListener { animator ->
+             view.alpha = animator.animatedValue as Float
+             dimLayoutParams.alpha = animator.animatedValue as Float
++            if (!view.isAttachedToWindow) {
++                return@addUpdateListener
++            }
+             try {
+                 windowManager.updateViewLayout(view, dimLayoutParams)
+             } catch (e: IllegalArgumentException) {
+@@ -110,7 +113,13 @@ class UdfpsHelper(
+         override fun onDisplayChanged(displayId: Int) {
+             if (displayId == Display.DEFAULT_DISPLAY && view.isAttachedToWindow) {
+                 brightnessToAlpha()
+-                windowManager.updateViewLayout(view, dimLayoutParams)
++                if (view.isAttachedToWindow) {
++                    try {
++                        windowManager.updateViewLayout(view, dimLayoutParams)
++                    } catch (e: IllegalArgumentException) {
++                        Log.w(TAG, "UDFPS dim layer is no longer attached", e)
++                    }
++                }
+             }
+         }
+ 
+@@ -174,7 +183,14 @@ class UdfpsHelper(
+     }
+ 
+     fun removeDimLayer() {
+-        windowManager.removeView(view)
++        alphaAnimator.cancel()
++        if (view.isAttachedToWindow) {
++            try {
++                windowManager.removeView(view)
++            } catch (e: IllegalArgumentException) {
++                Log.w(TAG, "UDFPS dim layer was already removed", e)
++            }
++        }
+         displayManager.unregisterDisplayListener(displayListener)
+     }
+ 
+-- 
+2.43.0
+

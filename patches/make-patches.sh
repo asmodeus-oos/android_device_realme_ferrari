@@ -1,0 +1,33 @@
+#!/bin/bash
+#
+# Regenerates the ferrari device patch set from the local ROM source repos.
+#
+# Usage (from the ROM root, after committing new local source changes):
+#     bash device/realme/ferrari/patches/make-patches.sh
+#
+# Each repo is diffed against its fork point (the last upstream commit the
+# local branch was created from). Update the base SHAs below if the local
+# branches are ever rebased onto a newer upstream.
+#
+# The generated patches are applied with
+# device/realme/ferrari/patches/apply-patches.sh
+
+set -eu
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+OUT="$ROOT/device/realme/ferrari/patches"
+
+regenerate() {
+    local repo="$1"
+    local base="$2"
+    local outdir="$3"
+    rm -rf "$outdir"
+    mkdir -p "$outdir"
+    git -C "$ROOT/$repo" format-patch "$base"..HEAD -o "$outdir"
+}
+
+regenerate frameworks/base 9b016cee78fd "$OUT/frameworks-base"
+regenerate kernel/oneplus/sm8450 2863ca29^ "$OUT/kernel-oneplus-sm8450"
+regenerate vendor/lineage 381d6e41^ "$OUT/vendor-lineage"
+
+echo "Patches regenerated under $OUT"

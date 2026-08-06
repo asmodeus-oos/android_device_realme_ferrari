@@ -1,0 +1,33 @@
+From ba463f53863f149de4f35e389bbfb2cb105cffb4 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Thu, 6 Aug 2026 19:41:22 +0000
+Subject: [PATCH 2/2] input: touchscreen: oplus: report KEY_WAKEUP on double
+ tap gesture
+
+The OPLUS touchscreen v2 driver registered KEY_WAKEUP in the input keybit but never reported it, so double-tap-to-wake was dead: the panel detected the gesture (firmware gesture mask 8191) but only the unmapped KEY_GESTURE_START+DOU_TAP key was sent, which no keylayout maps and no framework code handles. Mirror the goodix_berlin driver and report KEY_WAKEUP (an AOSP wake key) when the double-tap gesture is enabled, so the display wakes through the standard input wake path.
+---
+ .../oplus_touchscreen_v2/touchpanel_common_driver.c       | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c b/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c
+index 6b40a310bb9b..4167a1990025 100755
+--- a/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c
++++ b/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c
+@@ -710,6 +710,14 @@ static void tp_gesture_handle(struct touchpanel_data *ts)
+ 			}
+ 		}
+ 
++		if (gesture_info_temp.gesture_type == DOU_TAP) {
++			TP_INFO(ts->tp_index, "report double tap wakeup\n");
++			input_report_key(ts->input_dev, KEY_WAKEUP, 1);
++			input_sync(ts->input_dev);
++			input_report_key(ts->input_dev, KEY_WAKEUP, 0);
++			input_sync(ts->input_dev);
++		}
++
+ 		input_report_key(ts->input_dev, KEY_GESTURE_START + gesture_info_temp.gesture_type, 1);
+ 		input_sync(ts->input_dev);
+ 		input_report_key(ts->input_dev, KEY_GESTURE_START + gesture_info_temp.gesture_type, 0);
+-- 
+2.43.0
+

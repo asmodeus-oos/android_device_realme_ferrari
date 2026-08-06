@@ -1,0 +1,30 @@
+From 556e3148a5269ad83385449f89abe5860da77473 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 14:15:54 +0000
+Subject: [PATCH 01/16] multisensory: tune LRA slider feedback
+
+---
+ .../repository/haptics/MultisensoryComposedEffect.java     | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java b/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java
+index 0b9861ad1549..e679e01b3856 100644
+--- a/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java
++++ b/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java
+@@ -204,8 +204,11 @@ public class MultisensoryComposedEffect implements MultisensoryHapticEffect {
+                 }
+                 builder.addAmplitudeControlFallbackEffect(
+                                 VibrationEffect.createWaveform(
+-                                        new long[] {10, 20, 20, 10},
+-                                        new int[] {10, 30, 50, 10}, /*repeat*/
++                                        // The ferrari uses a high-bandwidth X-axis LRA.  A
++                                        // shorter, sharper envelope is easier to feel without
++                                        // turning continuous slider movement into a rattle.
++                                        new long[] {8, 14, 14, 8},
++                                        new int[] {16, 48, 82, 16}, /*repeat*/
+                                         -1))
+                         // TODO(b/462734796): Clarify the parameters of base envelopes
+                         .addEnvelopeEffect(/*baseScale*/ 0.2f, /*baseFrequency*/ 100f);
+-- 
+2.43.0
+

@@ -1,0 +1,59 @@
+From 381d6e418fa60592cdc75964467454c8e5aabe3d Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Thu, 6 Aug 2026 12:00:57 +0000
+Subject: [PATCH] evolution: ferrari-specific vendor config tweaks
+
+---
+ build/envsetup.sh            | 2 ++
+ config/BoardConfigLineage.mk | 4 ++++
+ config/evolution.mk          | 7 ++++++-
+ 3 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/build/envsetup.sh b/build/envsetup.sh
+index 13b74bb0..ce73d4ad 100644
+--- a/build/envsetup.sh
++++ b/build/envsetup.sh
+@@ -14,6 +14,8 @@ function check_product()
+     fi
+     if (echo -n $1 | grep -q -e "^lineage_") ; then
+         LINEAGE_BUILD=$(echo -n $1 | sed -e 's/^lineage_//g')
++    elif (echo -n $1 | grep -q -e "^evolution_") ; then
++        LINEAGE_BUILD=$(echo -n $1 | sed -e 's/^evolution_//g')
+     else
+         LINEAGE_BUILD=
+     fi
+diff --git a/config/BoardConfigLineage.mk b/config/BoardConfigLineage.mk
+index 172d2966..0bff8b06 100644
+--- a/config/BoardConfigLineage.mk
++++ b/config/BoardConfigLineage.mk
+@@ -4,6 +4,10 @@
+ # Recovery
+ BOARD_USES_FULL_RECOVERY_IMAGE ?= true
+ 
++# repo manifest (build-manifest.xml) updates .repo/*.json caches during the build.
++# nsjail requires an absolute allowlist path (relative .repo breaks WSL2 bind mounts).
++BUILD_BROKEN_SRC_DIR_RW_ALLOWLIST += $(abspath .)/.repo
++
+ include vendor/lineage/config/BoardConfigKernel.mk
+ 
+ ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+diff --git a/config/evolution.mk b/config/evolution.mk
+index cc820f1f..9bce1c4f 100644
+--- a/config/evolution.mk
++++ b/config/evolution.mk
+@@ -1,6 +1,11 @@
+-# BuildFingerprint spoof to fix RCS/Wallet
++# BuildFingerprint spoof to fix RCS/Wallet on devices that opt into the
++# generic Pixel profile. Realme ferrari supplies its own stock fingerprint;
++# TARGET_DEVICE is not populated yet while common product files are parsed,
++# so key this exception off the lunch product instead.
++ifeq ($(filter evolution_ferrari lineage_ferrari,$(TARGET_PRODUCT)),)
+ PRODUCT_BUILD_PROP_OVERRIDES += \
+     BuildFingerprint=google/mustang_beta/mustang:CANARY/ZP11.260515.009/15513807:user/release-keys
++endif
+ 
+ # Evolution X packages
+ PRODUCT_PACKAGES += \
+-- 
+2.43.0
+

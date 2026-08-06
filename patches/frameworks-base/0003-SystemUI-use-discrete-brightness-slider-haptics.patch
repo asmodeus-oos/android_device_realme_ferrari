@@ -1,0 +1,80 @@
+From e77ca2edfefc375269750eafef6f791c81363d93 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 16:30:58 +0000
+Subject: [PATCH 03/16] SystemUI: use discrete brightness slider haptics
+
+---
+ .../brightness/ui/compose/BrightnessSlider.kt | 13 +++++++++-
+ .../slider/SliderHapticFeedbackProvider.kt    | 25 ++++++++++++-------
+ 2 files changed, 28 insertions(+), 10 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/brightness/ui/compose/BrightnessSlider.kt b/packages/SystemUI/src/com/android/systemui/brightness/ui/compose/BrightnessSlider.kt
+index 4d8fa34d0a53..c4909fedf965 100644
+--- a/packages/SystemUI/src/com/android/systemui/brightness/ui/compose/BrightnessSlider.kt
++++ b/packages/SystemUI/src/com/android/systemui/brightness/ui/compose/BrightnessSlider.kt
+@@ -164,7 +164,18 @@ fun BrightnessSlider(
+                     floatValueRange,
+                     Orientation.Horizontal,
+                     SliderHapticFeedbackConfig(
+-                        maxVelocityToScale = 1f /* slider progress(from 0 to 1) per sec */
++                        maxVelocityToScale = 1f /* slider progress(from 0 to 1) per sec */,
++                        // Brightness is a quantized control on ferrari. Use one short
++                        // click per roughly 2.5% of travel instead of five overlapping
++                        // continuous ticks on every pointer update.
++                        progressBasedDragMinScale = 0.15f,
++                        progressBasedDragMaxScale = 0.30f,
++                        additionalVelocityMaxBump = 0.03f,
++                        deltaProgressForDragThreshold = 0.02f,
++                        numberOfLowTicks = 1,
++                        lowerBookendScale = 0.12f,
++                        upperBookendScale = 0.30f,
++                        sliderStepSize = 0.025f,
+                     ),
+                     SeekableSliderTrackerConfig(),
+                 )
+diff --git a/packages/SystemUI/src/com/android/systemui/haptics/slider/SliderHapticFeedbackProvider.kt b/packages/SystemUI/src/com/android/systemui/haptics/slider/SliderHapticFeedbackProvider.kt
+index e3f260220a6a..f193edb74769 100644
+--- a/packages/SystemUI/src/com/android/systemui/haptics/slider/SliderHapticFeedbackProvider.kt
++++ b/packages/SystemUI/src/com/android/systemui/haptics/slider/SliderHapticFeedbackProvider.kt
+@@ -137,9 +137,22 @@ class SliderHapticFeedbackProvider(
+                 config.deltaProgressForDragThreshold
+ 
+         // Slider step conditions
+-        val discreteStepPassed =
+-            config.sliderStepSize > 0 &&
+-                normalizedSliderProgress.isDiscreteStep(config.sliderStepSize)
++        // Pointer updates almost never land exactly on a mathematical step. Compare
++        // quantized buckets instead, otherwise a discrete slider silently becomes
++        // continuous (or skips all haptics) depending on touch sampling frequency.
++        val discreteStepPassed = if (config.sliderStepSize > 0) {
++            val currentStep =
++                round(normalizedSliderProgress / config.sliderStepSize).toInt()
++            val lastStep =
++                if (dragTextureLastProgress < 0f) {
++                    Int.MIN_VALUE
++                } else {
++                    round(dragTextureLastProgress / config.sliderStepSize).toInt()
++                }
++            currentStep != lastStep
++        } else {
++            false
++        }
+         val shouldStepVibrate = config.sliderStepSize == 0f || discreteStepPassed
+ 
+         return if (isComingFromBookend) {
+@@ -149,12 +162,6 @@ class SliderHapticFeedbackProvider(
+         }
+     }
+ 
+-    private fun Float.isDiscreteStep(stepSize: Float, epsilon: Float = 0.001f): Boolean {
+-        if (stepSize <= 0f) return false
+-        val division = this / stepSize
+-        return abs(division - round(division)) < epsilon
+-    }
+-
+     private fun performDiscreteSliderDragVibration(scale: Float) {
+         val properties =
+             InteractionProperties.DynamicVibrationScale(
+-- 
+2.43.0
+
