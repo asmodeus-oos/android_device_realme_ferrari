@@ -1,0 +1,50 @@
+From c7bb0e4ad46bd9545f11099ab773d6b933a63a0e Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Fri, 7 Aug 2026 07:01:38 +0000
+Subject: [PATCH 3/3] leds: qti-flash: make torch brightness nodes
+ world-writable
+
+ferrari: the vendor CamX HAL cannot drive flashlight strength (its flash
+capability query is unimplemented), so SystemUI applies torch levels by
+writing the LED brightness (interpreted as current in mA) directly. The
+LED class brightness node is root-only by default; relax it to 0666 for
+the torch LEDs.
+---
+ drivers/leds/leds-qti-flash.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/leds/leds-qti-flash.c b/drivers/leds/leds-qti-flash.c
+index 2952fbeef352..38bd0ed9c178 100644
+--- a/drivers/leds/leds-qti-flash.c
++++ b/drivers/leds/leds-qti-flash.c
+@@ -21,6 +21,7 @@
+ #include <linux/power_supply.h>
+ #include <linux/regmap.h>
+ #include <linux/soc/qcom/battery_charger.h>
++#include <linux/sysfs.h>
+ 
+ #include "leds.h"
+ 
+@@ -1725,6 +1726,19 @@ static int register_flash_device(struct qti_flash_led *led,
+ 		return rc;
+ 	}
+ 
++	/*
++	 * ferrari: allow the torch brightness (current in mA) to be driven
++	 * directly by system_app so SystemUI can implement flashlight strength
++	 * levels that the vendor CamX HAL does not support. The LED class
++	 * brightness node is root-only by default.
++	 */
++	if (fnode->type == FLASH_LED_TYPE_TORCH) {
++		static struct device_attribute torch_brightness_attr =
++			__ATTR(brightness, 0666, NULL, NULL);
++		sysfs_chmod_file(&fnode->fdev.led_cdev.dev->kobj,
++			&torch_brightness_attr.attr, 0666);
++	}
++
+ 	return 0;
+ }
+ 
+-- 
+2.43.0
+

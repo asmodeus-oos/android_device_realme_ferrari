@@ -1,7 +1,7 @@
 From ba463f53863f149de4f35e389bbfb2cb105cffb4 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Thu, 6 Aug 2026 19:41:22 +0000
-Subject: [PATCH 2/2] input: touchscreen: oplus: report KEY_WAKEUP on double
+Subject: [PATCH 2/3] input: touchscreen: oplus: report KEY_WAKEUP on double
  tap gesture
 
 The OPLUS touchscreen v2 driver registered KEY_WAKEUP in the input keybit but never reported it, so double-tap-to-wake was dead: the panel detected the gesture (firmware gesture mask 8191) but only the unmapped KEY_GESTURE_START+DOU_TAP key was sent, which no keylayout maps and no framework code handles. Mirror the goodix_berlin driver and report KEY_WAKEUP (an AOSP wake key) when the double-tap gesture is enabled, so the display wakes through the standard input wake path.

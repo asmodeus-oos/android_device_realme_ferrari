@@ -14,7 +14,7 @@
 
 set -eu
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 OUT="$ROOT/device/realme/ferrari/patches"
 
 regenerate() {
