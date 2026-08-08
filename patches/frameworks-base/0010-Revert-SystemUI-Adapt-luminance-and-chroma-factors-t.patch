@@ -1,7 +1,7 @@
 From c23d04497683063f58beee4d166c756e32dbc8f1 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 17:59:08 +0000
-Subject: [PATCH 10/16] Revert "SystemUI: Adapt luminance and chroma factors to
+Subject: [PATCH 10/17] Revert "SystemUI: Adapt luminance and chroma factors to
  A17 [1/2]"
 
 This reverts commit 8ec18c66402d0a0b395d5e8d71e93157cfc092cc.
