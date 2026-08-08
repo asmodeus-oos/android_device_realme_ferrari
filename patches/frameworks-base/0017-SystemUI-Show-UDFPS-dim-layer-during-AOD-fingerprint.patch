@@ -1,7 +1,7 @@
 From e36b616bcbc19eded80680f6b7057b6af3b3e226 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 13:06:35 +0000
-Subject: [PATCH 17/18] SystemUI: Show UDFPS dim layer during AOD fingerprint
+Subject: [PATCH 17/19] SystemUI: Show UDFPS dim layer during AOD fingerprint
  press
 
 While the display is dozing the dim layer is hidden because the shade is
