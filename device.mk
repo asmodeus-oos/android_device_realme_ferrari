@@ -77,3 +77,7 @@ $(call inherit-product, device/oneplus/sm8450-common/common.mk)
 
 # Inherit from the proprietary files makefile.
 $(call inherit-product, vendor/realme/ferrari/ferrari-vendor.mk)
+
+# Let the camera service link the ferrari torch strength extension lib
+# (LibreMobileOS weak-symbol hook in libcameraservice).
+$(call soong_config_set,libcameraservice,ext_lib,libferrari_torch_ext)
