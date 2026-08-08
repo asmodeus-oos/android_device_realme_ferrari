@@ -1,7 +1,7 @@
 From 6f41416d8bf14befe77e527011555257ef49793e Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 18:19:58 +0000
-Subject: [PATCH 14/17] Reapply "SystemUI: Route surface tokens through
+Subject: [PATCH 14/18] Reapply "SystemUI: Route surface tokens through
  background scheme"
 
 This reverts commit e0a2ab2c684c5dba574f8ca5eaa6e817b275bf35.
