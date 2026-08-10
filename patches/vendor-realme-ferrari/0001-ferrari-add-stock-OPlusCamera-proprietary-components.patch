@@ -1,7 +1,7 @@
 From 19d28eb75409faa229072f4c9e6a8c10ca15b7b5 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:06:52 +0000
-Subject: [PATCH] ferrari: add stock OPlusCamera proprietary components
+Subject: [PATCH 1/2] ferrari: add stock OPlusCamera proprietary components
 
 ---
  Android.bp                                    | 377 ++++++++++++++++++
