@@ -1,0 +1,13 @@
+diff --git a/smali/androidx/activity/i.smali b/smali/androidx/activity/i.smali
+index 05a391e..96752ec 100644
+--- a/smali/androidx/activity/i.smali
++++ b/smali/androidx/activity/i.smali
+@@ -264,6 +264,8 @@
+     .line 112
+     move-result-object v8
+ 
++    if-eqz v8, :goto_1
++
+     .line 113
+     invoke-virtual {v4, v8}, Lsf/m0;->Bd(Landroid/media/CamcorderProfile;)V
+ 

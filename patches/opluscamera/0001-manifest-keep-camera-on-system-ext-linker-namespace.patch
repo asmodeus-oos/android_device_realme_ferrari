@@ -1,0 +1,21 @@
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index e15d23a..8588748 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -78,7 +78,6 @@
+     <uses-permission android:name="com.oplus.gallery3d.permission.PROVIDER"/>
+     <uses-permission android:name="com.oplus.permission.OCLICK"/>
+     <uses-permission android:name="oplus.permission.APP_SETTING"/>
+-    <uses-permission android:name="android.permission.CONTROL_KEYGUARD"/>
+     <uses-permission android:name="oplus.permission.OPLUS_COMPONENT_SAFE"/>
+     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+@@ -121,7 +120,7 @@
+     <uses-permission android:name="com.oplus.camera.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"/>
+     <uses-permission android:name="com.ucar.permission.UCAR_SERVICE"/>
+     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+-    <application android:allowBackup="false" android:appComponentFactory="androidx.core.app.CoreComponentFactory" android:extractNativeLibs="true" android:forceQueryable="true" android:icon="@mipmap/ic_launcher" android:label="@string/camera_app_name" android:largeHeap="true" android:logo="@mipmap/ic_launcher" android:name="com.oplus.camera.MyApplication" android:resizeableActivity="false" android:supportsRtl="true" android:useEmbeddedDex="false">
++    <application android:allowBackup="false" android:appComponentFactory="androidx.core.app.CoreComponentFactory" android:extractNativeLibs="false" android:forceQueryable="true" android:icon="@mipmap/ic_launcher" android:label="@string/camera_app_name" android:largeHeap="true" android:logo="@mipmap/ic_launcher" android:name="com.oplus.camera.MyApplication" android:resizeableActivity="false" android:supportsRtl="true" android:useEmbeddedDex="false">
+         <activity android:clearTaskOnLaunch="true" android:configChanges="fontScale|keyboard|keyboardHidden|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode" android:exported="true" android:label="@string/camera_app_name" android:launchMode="singleTop" android:name="com.oplus.camera.Camera" android:resizeableActivity="false" android:screenOrientation="behind" android:showWhenLocked="true" android:taskAffinity="com.oplus.camera" android:theme="@style/ThemeCamera.FullScreen" android:visibleToInstantApps="true" android:windowSoftInputMode="stateAlwaysHidden|adjustPan">
+             <intent-filter android:priority="1">
+                 <action android:name="oplus.intent.action.QUERY_SDCARD_APP_INFO"/>

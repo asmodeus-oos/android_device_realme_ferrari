@@ -1,0 +1,25 @@
+diff --git a/smali_classes12/sf/m0.smali b/smali_classes12/sf/m0.smali
+index 58e3d9c..353740e 100644
+--- a/smali_classes12/sf/m0.smali
++++ b/smali_classes12/sf/m0.smali
+@@ -8488,8 +8488,20 @@
+     invoke-static {p0, v6}, Landroid/media/CamcorderProfile;->get(II)Landroid/media/CamcorderProfile;
+ 
+     .line 304
+     .line 305
+     .line 306
+     move-result-object p0
++
++    if-nez p0, :cond_12
++
++    const/4 p0, 0x0
++
++    const/4 v6, 0x1
++
++    invoke-static {p0, v6}, Landroid/media/CamcorderProfile;->get(II)Landroid/media/CamcorderProfile;
++
++    move-result-object p0
++
++    :cond_12
+     :try_end_0
+     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
