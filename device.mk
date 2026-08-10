@@ -78,6 +78,25 @@ $(call inherit-product, device/oneplus/sm8450-common/common.mk)
 # Inherit from the proprietary files makefile.
 $(call inherit-product, vendor/realme/ferrari/ferrari-vendor.mk)
 
+# Stock OPlusCamera integration
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/camera/oplus_camera_default_grant_permissions_list.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/default-permissions/oplus_camera_default_grant_permissions_list.xml \
+    $(LOCAL_PATH)/configs/camera/oplus_google_lens_config.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/oplus_google_lens_config.xml \
+    $(LOCAL_PATH)/configs/camera/privapp-permissions-oplus-camera.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-oplus-camera.xml \
+    $(LOCAL_PATH)/configs/camera/hiddenapi-package-oplus-camera-whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/hiddenapi-package-oplus-camera-whitelist.xml
+
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.vendor.camera.privapp.list=com.oplus.camera \
+    ro.com.google.lens.oem_camera_package=com.oplus.camera
+
+PRODUCT_PACKAGES += \
+    init.oplus.camera.rc
+
+# Pass the calling package through the OPLUS vendor tag and preserve the
+# reserved pixel format used by the stock camera HAL.
+$(call soong_config_set,camera,package_name,com.oplus.packageName)
+$(call soong_config_set_bool,camera,override_format_from_reserved,true)
+
 # Let the camera service link the ferrari torch strength extension lib
 # (LibreMobileOS weak-symbol hook in libcameraservice).
 $(call soong_config_set,libcameraservice,ext_lib,libferrari_torch_ext)

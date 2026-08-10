@@ -29,5 +29,8 @@ regenerate() {
 regenerate frameworks/base 9b016cee78fd "$OUT/frameworks-base"
 regenerate kernel/oneplus/sm8450 2863ca29^ "$OUT/kernel-oneplus-sm8450"
 regenerate vendor/lineage 381d6e41^ "$OUT/vendor-lineage"
+regenerate build/soong 7be596ebc "$OUT/build-soong"
+regenerate hardware/oplus 1a0f97a "$OUT/hardware-oplus"
+regenerate vendor/realme/ferrari 259ef42 "$OUT/vendor-realme-ferrari"
 
 echo "Patches regenerated under $OUT"

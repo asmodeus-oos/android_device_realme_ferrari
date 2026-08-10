@@ -1,0 +1,7 @@
+on post-fs-data
+    # Give the camera app a public, read-only label for the CDSP shell while
+    # keeping the rest of /vendor/dsp inaccessible to core domains.
+    mkdir /mnt/vendor/dsp 0770 root root
+    copy /vendor/dsp/cdsp/fastrpc_shell_3 /mnt/vendor/dsp/fastrpc_shell_3
+    chmod 0644 /mnt/vendor/dsp/fastrpc_shell_3
+    mount none /mnt/vendor/dsp/fastrpc_shell_3 /vendor/dsp/cdsp/fastrpc_shell_3 bind

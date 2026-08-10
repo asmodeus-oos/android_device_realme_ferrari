@@ -1,0 +1,37 @@
+From ed13031f597b35612f14462cac02612b391f5516 Mon Sep 17 00:00:00 2001
+From: bubundas17 <bubundas17@users.noreply.github.com>
+Date: Sun, 9 Aug 2026 06:58:57 +0000
+Subject: [PATCH] check_boot_jars: allow OCS camera unit SDK bundled packages
+
+---
+ scripts/check_boot_jars/package_allowed_list.txt | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/scripts/check_boot_jars/package_allowed_list.txt b/scripts/check_boot_jars/package_allowed_list.txt
+index bca7fdab1..82f2d19ed 100644
+--- a/scripts/check_boot_jars/package_allowed_list.txt
++++ b/scripts/check_boot_jars/package_allowed_list.txt
+@@ -238,6 +238,20 @@ com.oneplus.*
+ com\.thundersoft\..*
+ vendor.oneplus.*
+ 
++# OCS camera unit SDK bundled deps (com.oplus.camera.unit.sdk)
++com\.anc\..*
++com\.arcsoft\..*
++com\.coloros\..*
++com\.common
++com\.google\.oplus\.protobuf.*
++com\.heytap\..*
++com\.livephoto\..*
++com\.meicam\..*
++com\.singleblur\..*
++com\.softsugar\..*
++com\.tencent\.youtu\..*
++com\.youtu\..*
++
+ # LMOFreeform
+ com\.libremobileos\..*
+ 
+-- 
+2.43.0
+

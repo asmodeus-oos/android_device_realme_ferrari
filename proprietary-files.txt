@@ -861,6 +861,7 @@ odm/lib64/libImageWarpMask.so;FIX_SONAME
 odm/lib64/libNamaWrapper.so
 odm/lib64/libOGLManager.so
 odm/lib64/libOPLUS_SCPortrait.so;FIX_SONAME
+odm/lib64/libOplusSecurity.so
 odm/lib64/libPerfectColor.so
 odm/lib64/libPerfectlyClearCrux.so
 odm/lib64/libPerfectlyClearCruxOpt.so
@@ -1188,6 +1189,22 @@ vendor/lib64/vendor.oplus.hardware.cammidasservice@1.0.so
 vendor/lib64/vendor.oplus.hardware.sendextcamcmd-V2-ndk_platform.so
 vendor/lib64/vendor.qti.hardware.camera.aon@1.0-service-impl.so
 vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
+
+# Stock OPlusCamera app (ColorOS 15, com.oplus.camera)
+product/app/OplusCamera/OplusCamera.apk:product/priv-app/OplusCamera/OplusCamera.apk;OVERRIDES=Camera2,GoogleCameraGo
+product/framework/com.oplus.camera.unit.sdk.jar
+product/lib64/libAPSClient-cmd-jni.so
+product/lib64/libAPSClient-jni.so
+product/lib64/libAncHumBokeh-jni.so
+product/lib64/libApsFaceBeautyPreviewProductJni.so
+product/lib64/libApsSuperEISPreviewJni.so
+product/lib64/libarcsoft_panorama_burstcapture.so
+product/lib64/libarcsoft_wideselfie.so
+product/lib64/libjnisingleblur_api.so
+product/lib64/libsingle_camera_bokeh_native.so
+system_ext/lib64/libAPSClient-cmd-jni-extension.oplus.so
+system_ext/lib64/libOplusStringJNI.so
+system_ext/lib64/libapssuspend-jni.oplus.so
 
 # Camera firmware
 vendor/firmware/CAMERA_ICP.b00

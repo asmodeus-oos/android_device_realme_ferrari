@@ -1,0 +1,8 @@
+# Stock OPlusCamera is re-signed with the ROM platform key. Keep the complete
+# platform-app policy surface and add only the device-specific vendor access
+# from the vendor policy half.
+typeattribute opluscamera_app coredomain;
+app_domain(opluscamera_app)
+platform_app_domain(opluscamera_app)
+net_domain(opluscamera_app)
+bluetooth_domain(opluscamera_app)

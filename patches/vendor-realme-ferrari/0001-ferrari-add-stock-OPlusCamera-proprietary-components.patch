@@ -1,0 +1,628 @@
+From 19d28eb75409faa229072f4c9e6a8c10ca15b7b5 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:06:52 +0000
+Subject: [PATCH] ferrari: add stock OPlusCamera proprietary components
+
+---
+ Android.bp                                    | 377 ++++++++++++++++++
+ ferrari-vendor.mk                             |  19 +
+ .../etc/camera/CameraHWConfiguration.config   |   5 +-
+ proprietary/odm/lib64/libOplusSecurity.so     |   3 +
+ .../framework/com.oplus.camera.unit.sdk.jar   |   3 +
+ .../product/lib64/libAPSClient-cmd-jni.so     |   3 +
+ proprietary/product/lib64/libAPSClient-jni.so |   3 +
+ .../product/lib64/libAncHumBokeh-jni.so       |   3 +
+ .../libApsFaceBeautyPreviewProductJni.so      |   3 +
+ .../product/lib64/libApsSuperEISPreviewJni.so |   3 +
+ .../lib64/libarcsoft_panorama_burstcapture.so |   3 +
+ .../product/lib64/libarcsoft_wideselfie.so    |   3 +
+ .../product/lib64/libjnisingleblur_api.so     |   3 +
+ .../lib64/libsingle_camera_bokeh_native.so    |   3 +
+ .../priv-app/OplusCamera/OplusCamera.apk      |   3 +
+ .../libAPSClient-cmd-jni-extension.oplus.so   |   3 +
+ .../system_ext/lib64/libOplusStringJNI.so     |   3 +
+ .../lib64/libapssuspend-jni.oplus.so          |   3 +
+ 18 files changed, 445 insertions(+), 1 deletion(-)
+ create mode 100644 proprietary/odm/lib64/libOplusSecurity.so
+ create mode 100644 proprietary/product/framework/com.oplus.camera.unit.sdk.jar
+ create mode 100644 proprietary/product/lib64/libAPSClient-cmd-jni.so
+ create mode 100644 proprietary/product/lib64/libAPSClient-jni.so
+ create mode 100644 proprietary/product/lib64/libAncHumBokeh-jni.so
+ create mode 100644 proprietary/product/lib64/libApsFaceBeautyPreviewProductJni.so
+ create mode 100644 proprietary/product/lib64/libApsSuperEISPreviewJni.so
+ create mode 100644 proprietary/product/lib64/libarcsoft_panorama_burstcapture.so
+ create mode 100644 proprietary/product/lib64/libarcsoft_wideselfie.so
+ create mode 100644 proprietary/product/lib64/libjnisingleblur_api.so
+ create mode 100644 proprietary/product/lib64/libsingle_camera_bokeh_native.so
+ create mode 100644 proprietary/product/priv-app/OplusCamera/OplusCamera.apk
+ create mode 100644 proprietary/system_ext/lib64/libAPSClient-cmd-jni-extension.oplus.so
+ create mode 100644 proprietary/system_ext/lib64/libOplusStringJNI.so
+ create mode 100644 proprietary/system_ext/lib64/libapssuspend-jni.oplus.so
+
+diff --git a/Android.bp b/Android.bp
+index 3639295..df4816e 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -12355,6 +12355,30 @@ cc_prebuilt_library_shared {
+     device_specific: true,
+ }
+ 
++cc_prebuilt_library_shared {
++    name: "libOplusSecurity",
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/odm/lib64/libOplusSecurity.so",
++            ],
++            shared_libs: [
++                "liblog",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    device_specific: true,
++}
++
+ cc_prebuilt_library_shared {
+     name: "libsharebuffer",
+     owner: "realme",
+@@ -13515,3 +13539,356 @@ sh_binary {
+     filename: "init.oplus.fingerprints.sh",
+     device_specific: true,
+ }
++cc_prebuilt_library_shared {
++    name: "libAPSClient-cmd-jni",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libAPSClient-cmd-jni.so",
++            ],
++            shared_libs: [
++                "libvndksupport",
++                "liblog",
++                "libandroid",
++                "libnativewindow",
++                "libjnigraphics",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libAPSClient-jni",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libAPSClient-jni.so",
++            ],
++            shared_libs: [
++                "libvndksupport",
++                "liblog",
++                "libandroid",
++                "libnativewindow",
++                "libjnigraphics",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libAncHumBokeh-jni",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libAncHumBokeh-jni.so",
++            ],
++            shared_libs: [
++                "libjnigraphics",
++                "liblog",
++                "libm",
++                "libdl",
++                "libc",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libApsFaceBeautyPreviewProductJni",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libApsFaceBeautyPreviewProductJni.so",
++            ],
++            shared_libs: [
++                "libvndksupport",
++                "liblog",
++                "libandroid",
++                "libjnigraphics",
++                "libEGL",
++                "libGLESv1_CM",
++                "libGLESv3",
++                "libz",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libApsSuperEISPreviewJni",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libApsSuperEISPreviewJni.so",
++            ],
++            shared_libs: [
++                "libvndksupport",
++                "liblog",
++                "libandroid",
++                "libjnigraphics",
++                "libEGL",
++                "libGLESv1_CM",
++                "libGLESv3",
++                "libz",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libarcsoft_panorama_burstcapture",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libarcsoft_panorama_burstcapture.so",
++            ],
++            shared_libs: [
++                "liblog",
++                "libdl",
++                "libc",
++                "libm",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libarcsoft_wideselfie",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libarcsoft_wideselfie.so",
++            ],
++            shared_libs: [
++                "libmpbase",
++                "liblog",
++                "libdl",
++                "libc",
++                "libm",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libjnisingleblur_api",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libjnisingleblur_api.so",
++            ],
++            shared_libs: [
++                "libz",
++                "libjnigraphics",
++                "libvndksupport",
++                "liblog",
++                "libGLESv2",
++                "libm",
++                "libdl",
++                "libc",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libsingle_camera_bokeh_native",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/product/lib64/libsingle_camera_bokeh_native.so",
++            ],
++            shared_libs: [
++                "liblog",
++                "libGLESv3",
++                "libEGL",
++                "libnativewindow",
++                "libmpbase",
++                "libm",
++                "libdl",
++                "libc",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    product_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libAPSClient-cmd-jni-extension.oplus",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/system_ext/lib64/libAPSClient-cmd-jni-extension.oplus.so",
++            ],
++            shared_libs: [
++                "libvndksupport",
++                "liblog",
++                "libandroid",
++                "libnativewindow",
++                "libjnigraphics",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    system_ext_specific: true,
++}
++cc_prebuilt_library_shared {
++    name: "libapssuspend-jni.oplus",
++    check_elf_files: false,
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/system_ext/lib64/libapssuspend-jni.oplus.so",
++            ],
++            shared_libs: [
++                "liblog",
++                "libbase",
++                "libbinder_ndk",
++                "android.system.suspend-V1-ndk",
++                "libc++",
++                "libc",
++                "libm",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    system_ext_specific: true,
++}
++
++android_app_import {
++    name: "OplusCamera",
++    owner: "realme",
++    apk: "proprietary/product/priv-app/OplusCamera/OplusCamera.apk",
++    overrides: ["Camera2", "GoogleCameraGo"],
++    certificate: "platform",
++    dex_preopt: {
++        enabled: false,
++    },
++    privileged: true,
++    product_specific: true,
++}
++
++cc_prebuilt_library_shared {
++    name: "libOplusStringJNI",
++    owner: "realme",
++    strip: {
++        none: true,
++    },
++    target: {
++        android_arm64: {
++            srcs: [
++                "proprietary/system_ext/lib64/libOplusStringJNI.so",
++            ],
++            shared_libs: [
++                "libvndksupport",
++                "liblog",
++                "libandroid",
++                "libc",
++                "libm",
++                "libstdc++",
++                "libdl",
++            ],
++        },
++    },
++    compile_multilib: "64",
++    prefer: true,
++    system_ext_specific: true,
++}
++
++// Stock OCS camera SDK (com.oplus.ocs.camera.*), used by OPlusCamera
++dex_import {
++    name: "com.oplus.camera.unit.sdk",
++    owner: "realme",
++    jars: [
++        "proprietary/product/framework/com.oplus.camera.unit.sdk.jar",
++    ],
++}
+diff --git a/ferrari-vendor.mk b/ferrari-vendor.mk
+index 4e5b525..432acf8 100644
+--- a/ferrari-vendor.mk
++++ b/ferrari-vendor.mk
+@@ -937,6 +937,20 @@ PRODUCT_COPY_FILES += \
+     vendor/realme/ferrari/proprietary/vendor/lib64/camera/arcsoft_dc_calibration_w.bin:$(TARGET_COPY_OUT_VENDOR)/lib64/camera/arcsoft_dc_calibration_w.bin
+ 
+ PRODUCT_PACKAGES += \
++    OplusCamera \
++    com.oplus.camera.unit.sdk \
++    libAPSClient-cmd-jni \
++    libAPSClient-jni \
++    libAncHumBokeh-jni \
++    libApsFaceBeautyPreviewProductJni \
++    libApsSuperEISPreviewJni \
++    libarcsoft_panorama_burstcapture \
++    libarcsoft_wideselfie \
++    libjnisingleblur_api \
++    libsingle_camera_bokeh_native \
++    libAPSClient-cmd-jni-extension.oplus \
++    libapssuspend-jni.oplus \
++    libOplusStringJNI \
+     com.arcsoft.node.eisv2 \
+     com.arcsoft.node.smooth_transition \
+     com.bots.node.vendortagwrite \
+@@ -1293,6 +1307,7 @@ PRODUCT_PACKAGES += \
+     librpmbengclient \
+     libsaveshaderbin \
+     libsecurity_event_dcs \
++    libOplusSecurity \
+     libsharebuffer \
+     libsharebuffer_impl \
+     libsnpe_dsp_domains_v2 \
+@@ -1357,3 +1372,7 @@ PRODUCT_PACKAGES += \
+     vendor.qti.esepowermanager@1.1-service \
+     vendor.qti.secure_element@1.2-service \
+     init.oplus.fingerprints
++
++# Stock OCS camera SDK jar on the boot classpath for OPlusCamera
++PRODUCT_BOOT_JARS += \
++    com.oplus.camera.unit.sdk
+diff --git a/proprietary/odm/etc/camera/CameraHWConfiguration.config b/proprietary/odm/etc/camera/CameraHWConfiguration.config
+index ec3852c..fa0e940 100644
+--- a/proprietary/odm/etc/camera/CameraHWConfiguration.config
++++ b/proprietary/odm/etc/camera/CameraHWConfiguration.config
+@@ -703,7 +703,10 @@ Mode[4]      =    4;        12
+ 
+ [OemRequestAvailableCapabilities]
+     #3rd app can't access system camera
+-    SystemCamera =  0;  0;  0;  0;  1;
++    # Evo: grant SYSTEM_CAMERA capability to all logical cameras so
++    # distortion correction (dewarp/LDC via distortion.calibration) works
++    # for third-party camera apps too, not just com.oplus.camera.
++    SystemCamera =  1;  1;  1;  1;  1;
+ 
+ [EnableQuickSnapshot]
+     EnableCameraMode = 0x8001; 0x8010; 0x8011 #operation mode
+diff --git a/proprietary/odm/lib64/libOplusSecurity.so b/proprietary/odm/lib64/libOplusSecurity.so
+new file mode 100644
+index 0000000..fa99363
+--- /dev/null
++++ b/proprietary/odm/lib64/libOplusSecurity.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:24fb1c5834368757ae372699dc701ff00d0c75a7b18b2f5e802b0b2143bd4ddf
++size 10120
+diff --git a/proprietary/product/framework/com.oplus.camera.unit.sdk.jar b/proprietary/product/framework/com.oplus.camera.unit.sdk.jar
+new file mode 100644
+index 0000000..687b5da
+--- /dev/null
++++ b/proprietary/product/framework/com.oplus.camera.unit.sdk.jar
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:bff54e250062d023c832cc85b3794db9a1ac903ce4713f08f9f8b49cfb7f35da
++size 4674900
+diff --git a/proprietary/product/lib64/libAPSClient-cmd-jni.so b/proprietary/product/lib64/libAPSClient-cmd-jni.so
+new file mode 100644
+index 0000000..6c8f0cc
+--- /dev/null
++++ b/proprietary/product/lib64/libAPSClient-cmd-jni.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:835daa291407302b781add895a6873fc7f367ebc76c0d46e6bb441b91ba04c70
++size 980976
+diff --git a/proprietary/product/lib64/libAPSClient-jni.so b/proprietary/product/lib64/libAPSClient-jni.so
+new file mode 100644
+index 0000000..69769fa
+--- /dev/null
++++ b/proprietary/product/lib64/libAPSClient-jni.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:f108594528f2c191d2ce59165d20335415d87233fd1d681625897058e7414047
++size 1111808
+diff --git a/proprietary/product/lib64/libAncHumBokeh-jni.so b/proprietary/product/lib64/libAncHumBokeh-jni.so
+new file mode 100644
+index 0000000..3922c1d
+--- /dev/null
++++ b/proprietary/product/lib64/libAncHumBokeh-jni.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:6c8593cc045e59fa38cbe7e2a09984f63779dfc58cb3521a68cd356d3ed9a7df
++size 264616
+diff --git a/proprietary/product/lib64/libApsFaceBeautyPreviewProductJni.so b/proprietary/product/lib64/libApsFaceBeautyPreviewProductJni.so
+new file mode 100644
+index 0000000..7f7589e
+--- /dev/null
++++ b/proprietary/product/lib64/libApsFaceBeautyPreviewProductJni.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:c9a1a86d13c2fb853b301eabf17cc862a11134601dc1866ee603ea3edfba8f94
++size 679392
+diff --git a/proprietary/product/lib64/libApsSuperEISPreviewJni.so b/proprietary/product/lib64/libApsSuperEISPreviewJni.so
+new file mode 100644
+index 0000000..007111f
+--- /dev/null
++++ b/proprietary/product/lib64/libApsSuperEISPreviewJni.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:8618727a9d35ec22a00cce6ec02afc995691aeb71f79c2aab442d6e99b7cdb91
++size 536824
+diff --git a/proprietary/product/lib64/libarcsoft_panorama_burstcapture.so b/proprietary/product/lib64/libarcsoft_panorama_burstcapture.so
+new file mode 100644
+index 0000000..40feada
+--- /dev/null
++++ b/proprietary/product/lib64/libarcsoft_panorama_burstcapture.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:e9cc89270dba9e0a1f148e3dc820d8067738bf1e60839825799ba96fb2969547
++size 571744
+diff --git a/proprietary/product/lib64/libarcsoft_wideselfie.so b/proprietary/product/lib64/libarcsoft_wideselfie.so
+new file mode 100644
+index 0000000..c78a944
+--- /dev/null
++++ b/proprietary/product/lib64/libarcsoft_wideselfie.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:74c839698f8095386b016f3b9e6762ae42d51417cbf03262489dac2d463d807c
++size 3307752
+diff --git a/proprietary/product/lib64/libjnisingleblur_api.so b/proprietary/product/lib64/libjnisingleblur_api.so
+new file mode 100644
+index 0000000..a4370d6
+--- /dev/null
++++ b/proprietary/product/lib64/libjnisingleblur_api.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:1cf51f84c452b696edd5f5fca653e6f1b4ae5b542a7c48b35187162ab15335e3
++size 481320
+diff --git a/proprietary/product/lib64/libsingle_camera_bokeh_native.so b/proprietary/product/lib64/libsingle_camera_bokeh_native.so
+new file mode 100644
+index 0000000..168ebea
+--- /dev/null
++++ b/proprietary/product/lib64/libsingle_camera_bokeh_native.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:efd573cef3aab020855a3ecf7a5d559b80183889fdb14e937a593b4c0c7065bf
++size 1142608
+diff --git a/proprietary/product/priv-app/OplusCamera/OplusCamera.apk b/proprietary/product/priv-app/OplusCamera/OplusCamera.apk
+new file mode 100644
+index 0000000..741ede6
+--- /dev/null
++++ b/proprietary/product/priv-app/OplusCamera/OplusCamera.apk
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:5d85b9a2f70bfa2d82c1d78ea146d8fa0252d0b4c8c56475dbfdc442b9addace
++size 133136028
+diff --git a/proprietary/system_ext/lib64/libAPSClient-cmd-jni-extension.oplus.so b/proprietary/system_ext/lib64/libAPSClient-cmd-jni-extension.oplus.so
+new file mode 100644
+index 0000000..1882741
+--- /dev/null
++++ b/proprietary/system_ext/lib64/libAPSClient-cmd-jni-extension.oplus.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:91eb27cbeec32fdc606a635e76736bea92cbad7a3cb36bc13c27f7c9d980dc87
++size 1099512
+diff --git a/proprietary/system_ext/lib64/libOplusStringJNI.so b/proprietary/system_ext/lib64/libOplusStringJNI.so
+new file mode 100644
+index 0000000..baae2a2
+--- /dev/null
++++ b/proprietary/system_ext/lib64/libOplusStringJNI.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:b773ad8a3e5d23ecf08ba9fe6bc683d0a629e1f89af7c18be8dc5f7ae2b0a67e
++size 12336
+diff --git a/proprietary/system_ext/lib64/libapssuspend-jni.oplus.so b/proprietary/system_ext/lib64/libapssuspend-jni.oplus.so
+new file mode 100644
+index 0000000..a7b1f9b
+--- /dev/null
++++ b/proprietary/system_ext/lib64/libapssuspend-jni.oplus.so
+@@ -0,0 +1,3 @@
++version https://git-lfs.github.com/spec/v1
++oid sha256:42638d8ab188d7da9f88ec476e2cf94be6cd1b9d27edaa3395484020fff993eb
++size 27624
+-- 
+2.43.0
+

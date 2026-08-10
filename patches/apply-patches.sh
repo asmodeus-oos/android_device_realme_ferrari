@@ -28,6 +28,9 @@ declare -A REPO_PATHS=(
     [frameworks-base]="frameworks/base"
     [kernel-oneplus-sm8450]="kernel/oneplus/sm8450"
     [vendor-lineage]="vendor/lineage"
+    [build-soong]="build/soong"
+    [hardware-oplus]="hardware/oplus"
+    [vendor-realme-ferrari]="vendor/realme/ferrari"
 )
 
 applied=0
@@ -60,7 +63,9 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
             skipped=$((skipped + 1))
             continue
         fi
-        if git -C "$target" am --3way "$patch"; then
+        # Several upstream OPLUS framework stubs use CRLF. Preserve carriage
+        # returns while parsing mail patches so their context stays exact.
+        if git -C "$target" am --3way --keep-cr "$patch"; then
             echo "applied: $repo_name/$name"
             applied=$((applied + 1))
         else
