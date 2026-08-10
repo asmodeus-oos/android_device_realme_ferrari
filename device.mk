@@ -80,10 +80,13 @@ $(call inherit-product, vendor/realme/ferrari/ferrari-vendor.mk)
 
 # Stock OPlusCamera integration
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/camera/oplus_camera_default_grant_permissions_list.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/default-permissions/oplus_camera_default_grant_permissions_list.xml \
-    $(LOCAL_PATH)/configs/camera/oplus_google_lens_config.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/oplus_google_lens_config.xml \
-    $(LOCAL_PATH)/configs/camera/privapp-permissions-oplus-camera.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-oplus-camera.xml \
+    $(LOCAL_PATH)/configs/camera/oplus_camera_default_grant_permissions_list.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/default-permissions/oplus_camera_default_grant_permissions_list.xml \
+    $(LOCAL_PATH)/configs/camera/oplus_google_lens_config.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/oplus_google_lens_config.xml \
+    $(LOCAL_PATH)/configs/camera/privapp-permissions-oplus-camera.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/privapp-permissions-oplus-camera.xml \
     $(LOCAL_PATH)/configs/camera/hiddenapi-package-oplus-camera-whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/hiddenapi-package-oplus-camera-whitelist.xml
+
+PRODUCT_BOOT_JARS += \
+    oplus-support-wrapper
 
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.vendor.camera.privapp.list=com.oplus.camera \
