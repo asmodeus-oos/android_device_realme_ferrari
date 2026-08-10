@@ -1,0 +1,69 @@
+From 75bbaebf628f96ac28201990c8a29239efb77f5b Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH 2/4] vibrator: tune ferrari LRA UI effects
+
+---
+ aidl/vibrator/qti/Vibrator.cpp                   | 10 +++++++---
+ aidl/vibrator/qti/effect/VibrationEffectConfig.h |  5 +++--
+ 2 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/aidl/vibrator/qti/Vibrator.cpp b/aidl/vibrator/qti/Vibrator.cpp
+index 378fc7b..bd524a8 100644
+--- a/aidl/vibrator/qti/Vibrator.cpp
++++ b/aidl/vibrator/qti/Vibrator.cpp
+@@ -1,3 +1,4 @@
++// Signed-off-by: Bubun Das <bubundas17@gmail.com>
+ /*
+  * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+  * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+@@ -335,7 +336,8 @@ int InputFFDevice::playEffect(int effectId, EffectStrength es, long* playLengthM
+     // not affected.
+     if (effectId == static_cast<int>(Effect::CLICK) ||
+         effectId == static_cast<int>(Effect::DOUBLE_CLICK) ||
+-        effectId == static_cast<int>(Effect::TICK)) {
++        effectId == static_cast<int>(Effect::TICK) ||
++        effectId == static_cast<int>(Effect::HEAVY_CLICK)) {
+         switch (es) {
+             case EffectStrength::LIGHT:
+                 mCurrMagnitude = UI_LIGHT_MAGNITUDE;
+@@ -506,11 +508,13 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength es,
+     if (ledVib.mDetected) {
+         switch (effect) {
+             case Effect::CLICK:
+-                ledVib.write_value(LED_DEVICE "/vmax", "2500");
++                // Short, crisp UI click for volume/charger events on the
++                // ferrari's X-axis LRA; keep TICK as the lighter slider step.
++                ledVib.write_value(LED_DEVICE "/vmax", "2000");
+                 ledVib.write_value(LED_DEVICE "/waveform_index", "1");
+                 break;
+             case Effect::DOUBLE_CLICK:
+-                ledVib.write_value(LED_DEVICE "/vmax", "2500");
++                ledVib.write_value(LED_DEVICE "/vmax", "2000");
+                 ledVib.write_value(LED_DEVICE "/waveform_index", "1");
+                 break;
+             case Effect::TICK:
+diff --git a/aidl/vibrator/qti/effect/VibrationEffectConfig.h b/aidl/vibrator/qti/effect/VibrationEffectConfig.h
+index 91a28ab..0aa8ab8 100644
+--- a/aidl/vibrator/qti/effect/VibrationEffectConfig.h
++++ b/aidl/vibrator/qti/effect/VibrationEffectConfig.h
+@@ -1,3 +1,4 @@
++// Signed-off-by: Bubun Das <bubundas17@gmail.com>
+ /*
+  * SPDX-FileCopyrightText: 2025 The LineageOS Project
+  * SPDX-License-Identifier: Apache-2.0
+@@ -458,9 +459,9 @@ static const int8_t effect_1_8_strong[] = {
+ static const struct effect_stream effects[] = {
+     {
+         .effect_id = 0,
+-        .length = 276,
++        .length = 260,
+         .play_rate_hz = 24000,
+-        .data = effect_1_8_strong,
++        .data = effect_0_0_strong,
+     },
+     {
+         .effect_id = 1,
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
 From e09741c7960f36f7f79dbf9e65422a6daa9ad354 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:06:52 +0000
-Subject: [PATCH] oplus-fwk: expose framework APIs required by OPlusCamera
+Subject: [PATCH 1/4] oplus-fwk: expose framework APIs required by OPlusCamera
 
 ---
  oplus-fwk/Android.bp                          |   6 +
