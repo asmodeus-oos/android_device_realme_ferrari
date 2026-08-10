@@ -1,1 +1,20 @@
 /mnt/vendor/dsp/fastrpc_shell_3    u:object_r:public_adsprpcd_file:s0
+
+# OPlusCamera loads its private APS stack in-process through
+# android_load_sphal_library(). Label the algorithms and the complete
+# dependency chain observed on Ferrari as SPHAL libraries.
+/(vendor|odm)/lib(64)?/libAlgoInterface\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libAlgoProcess\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libOplusSecurity\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libapsexif\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libapsjpeg\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libexif-jpeg-aps\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libextendfile\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libgralloc\.qti\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libion\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libmpbase\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libosenseaidlhalclient\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/libqdMetaData\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/vendor\.oplus\.hardware\.osense\.client-V1-ndk\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/vendor\.qti\.hardware\.camera\.postproc@1\.0\.so    u:object_r:same_process_hal_file:s0
+/(vendor|odm)/lib(64)?/vendor\.qti\.hardware\.display\.mapper@4\.0\.so    u:object_r:same_process_hal_file:s0
