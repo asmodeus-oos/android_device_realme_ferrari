@@ -1,0 +1,27 @@
+From a2d2e0242b05ec1b5cf63711ebf140007a435ee0 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH 2/2] libaudiobase: export legacy device connection symbol
+
+---
+ media/libaudioclient/Android.bp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/media/libaudioclient/Android.bp b/media/libaudioclient/Android.bp
+index efd550d46f..d465cb2196 100644
+--- a/media/libaudioclient/Android.bp
++++ b/media/libaudioclient/Android.bp
+@@ -136,6 +136,10 @@ cc_defaults {
+ cc_library {
+     name: "libaudiobase",
+ 
++    ldflags: [
++        "-Wl,--export-dynamic-symbol=_ZN7android11AudioSystem24setDeviceConnectionStateE24audio_policy_dev_state_tRKNS_5media5audio6common9AudioPortE14audio_format_tb",
++    ],
++
+     defaults: [
+         "libaudiobase_client_defaults",
+     ],
+-- 
+2.43.0
+
