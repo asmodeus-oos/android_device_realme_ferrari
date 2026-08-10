@@ -1,0 +1,37 @@
+From a892b2f699f6380ea634a8855eaf9634aa6e1b66 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH 4/4] power: avoid waiting for absent OPLUS touch service
+
+---
+ power/power-mode.cpp | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/power/power-mode.cpp b/power/power-mode.cpp
+index 7f9a067..00577b7 100644
+--- a/power/power-mode.cpp
++++ b/power/power-mode.cpp
+@@ -43,8 +43,18 @@ bool setDeviceSpecificMode(Mode type, bool enabled) {
+             int contents = 0;
+ 
+             const std::string instance = std::string() + IOplusTouch::descriptor + "/default";
+-            std::shared_ptr<IOplusTouch> oplusTouch = IOplusTouch::fromBinder(
+-                    ndk::SpAIBinder(AServiceManager_waitForService(instance.c_str())));
++            // Do not wait for the stock Oplus touch service here.  ferrari does
++            // not ship that service, and waiting for it blocks the power HAL
++            // forever.  PowerManagerService then blocks in nativeInit until
++            // system_server's watchdog kills the device during every boot.
++            AIBinder* binder = AServiceManager_checkService(instance.c_str());
++            if (binder == nullptr) {
++                LOG(WARNING) << "Oplus touch service is unavailable; using the QTI touch-node fallback";
++                return false;
++            }
++
++            std::shared_ptr<IOplusTouch> oplusTouch =
++                    IOplusTouch::fromBinder(ndk::SpAIBinder(binder));
+             LOG(INFO) << "Power mode: " << toString(type) << " isDoubleTapEnabled: " << enabled;
+ 
+             if (!oplusTouch) {
+-- 
+2.43.0
+
