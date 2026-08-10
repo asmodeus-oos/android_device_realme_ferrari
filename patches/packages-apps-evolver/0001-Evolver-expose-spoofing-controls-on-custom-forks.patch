@@ -1,0 +1,30 @@
+From e64a3bef50adf5b1dc644bb2def2b4f53df3d31a Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH] Evolver: expose spoofing controls on custom forks
+
+---
+ .../settings/fragments/miscellaneous/Spoofing.java         | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java b/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java
+index 762a79a..c5aad54 100644
+--- a/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java
++++ b/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java
+@@ -63,13 +63,6 @@ public class Spoofing extends SettingsPreferenceFragment implements
+         final ContentResolver resolver = context.getContentResolver();
+         mHandler = new Handler(Looper.getMainLooper());
+ 
+-        if (PixelPropsUtils.isCustomForkBuild()) {
+-            if (getPreferenceScreen() != null) {
+-                getPreferenceScreen().removeAll();
+-            }
+-            return;
+-        }
+-
+         mFeaturesCategory = (PreferenceCategory) findPreference(KEY_FEATURES_CATEGORY);
+         mAppSpecificCategory = (PreferenceCategory) findPreference(KEY_APP_SPECIFIC_CATEGORY);
+         mPhotosSpoof = (SwitchPreferenceCompat) findPreference(PI_PHOTOS_SPOOF);
+-- 
+2.43.0
+
