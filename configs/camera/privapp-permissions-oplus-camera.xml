@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <permissions>
+    <library name="com.oplus.camera.unit.sdk.adapter"
+        file="/system_ext/framework/com.oplus.camera.unit.sdk.adapter.jar" />
+    <library name="com.oplus.camera.unit.sdk"
+        file="/system_ext/framework/com.oplus.camera.unit.sdk.jar" />
+
     <privapp-permissions package="com.oplus.camera">
         <permission name="android.permission.DEVICE_POWER"/>
         <permission name="android.permission.INTERACT_ACROSS_USERS"/>
