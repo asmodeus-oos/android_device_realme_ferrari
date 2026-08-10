@@ -29,7 +29,14 @@ declare -A REPO_PATHS=(
     [kernel-oneplus-sm8450]="kernel/oneplus/sm8450"
     [vendor-lineage]="vendor/lineage"
     [build-soong]="build/soong"
+    [frameworks-av]="frameworks/av"
+    [hardware-interfaces]="hardware/interfaces"
+    [hardware-lineage-compat]="hardware/lineage/compat"
     [hardware-oplus]="hardware/oplus"
+    [hardware-qcom-caf-sm8450-audio-primary-hal]="hardware/qcom-caf/sm8450/audio/primary-hal"
+    [packages-apps-evolver]="packages/apps/Evolver"
+    [packages-apps-settings]="packages/apps/Settings"
+    [vendor-oneplus-sm8450-common]="vendor/oneplus/sm8450-common"
     [vendor-realme-ferrari]="vendor/realme/ferrari"
 )
 
