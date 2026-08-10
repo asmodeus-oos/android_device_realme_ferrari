@@ -1,0 +1,27 @@
+From 608efa27197cc2bd4f51204c01ddb49376866888 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 18:36:39 +0000
+Subject: [PATCH 1/2] Revert "AppVolumeSlice: Allow querying icon of apps
+ installed by any user"
+
+This reverts commit a8149f35371fd0b5a8cdd0254056d8188731b5b3.
+---
+ src/com/android/settings/media/AppVolumeSlice.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/com/android/settings/media/AppVolumeSlice.java b/src/com/android/settings/media/AppVolumeSlice.java
+index b6d0c5d4f4d..e653ffc0fb6 100644
+--- a/src/com/android/settings/media/AppVolumeSlice.java
++++ b/src/com/android/settings/media/AppVolumeSlice.java
+@@ -110,7 +110,7 @@ public class AppVolumeSlice implements CustomSliceable {
+     private IconCompat getApplicationIcon(String packageName) {
+         PackageManager pm = mContext.getPackageManager();
+         try {
+-            ApplicationInfo ai = pm.getApplicationInfo(packageName, PackageManager.MATCH_ANY_USER);
++            ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
+             Resources resources = pm.getResourcesForApplication(ai);
+             IconCompat icon = IconCompat.createWithResource(resources, packageName, ai.icon);
+             return icon;
+-- 
+2.43.0
+
