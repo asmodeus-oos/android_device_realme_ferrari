@@ -33,3 +33,4 @@ SELinux enforcing:
 4. Tapping the latest photo and latest video thumbnails opens Google Photos.
 5. The video selector offers 60 fps at 720p, 1080p, and 4K.
 6. More modes includes Slow motion and Microscope; verify 1080p120, 720p240/480, and the rear microscope camera.
+7. Portrait opens the stock rear-portrait logical camera (main + ultrawide) and retains a responsive preview after using Microscope.
