@@ -70,6 +70,31 @@ def blob_fixup_nop_call(
         break
 
 
+def blob_fixup_replace_bytes(
+    ctx: BlobFixupCtx,
+    file: File,
+    file_path: str,
+    offset: int,
+    expected: bytes,
+    replacement: bytes,
+    *args,
+    **kwargs,
+):
+    if len(expected) != len(replacement):
+        raise ValueError('Replacement must preserve the blob size')
+
+    with open(file_path, 'rb+') as f:
+        f.seek(offset)
+        actual = f.read(len(expected))
+        if actual != expected:
+            raise ValueError(
+                f'Unexpected bytes at {offset:#x}: '
+                f'{actual.hex()} != {expected.hex()}'
+            )
+        f.seek(offset)
+        f.write(replacement)
+
+
 blob_fixups: blob_fixups_user_type = {
     'system_ext/priv-app/OplusCamera/OplusCamera.apk': blob_fixup()
         .apktool_patch('patches/opluscamera'),
@@ -106,7 +131,16 @@ blob_fixups: blob_fixups_user_type = {
     ('odm/lib64/libarcsoft_dual_sat.so', 'odm/lib64/libarcsoft_dual_zoomtranslator.so', 'odm/lib64/libarcsoft_triple_sat.so', 'odm/lib64/libarcsoft_triple_zoomtranslator.so'): blob_fixup()
         .add_needed('libc++_shared.so'),
     'odm/lib64/libextensionlayer.so': blob_fixup()
-        .replace_needed('libziparchive.so', 'libziparchive_odm.so'),
+        .replace_needed('libziparchive.so', 'libziparchive_odm.so')
+        # CameraX session replacement can leave the metadata manager's
+        # auxiliary linked-list head poisoned. Preserve destruction of all
+        # real metadata pools while skipping only that invalid list.
+        .call(
+            blob_fixup_replace_bytes,
+            offset=0x1185C8,
+            expected=b'\xa0\x0a\x40\xf9',
+            replacement=b'\x06\x00\x00\x14',
+        ),
     'vendor/etc/libnfc-nci.conf': blob_fixup()
         .regex_replace('NFC_DEBUG_ENABLED=1', 'NFC_DEBUG_ENABLED=0'),
     'vendor/etc/libnfc-nxp.conf': blob_fixup()
@@ -155,7 +189,6 @@ blob_fixups: blob_fixups_user_type = {
         'vendor/lib64/com.qti.feature2.generic.so',
         'vendor/lib64/com.qualcomm.mcx.linearmapper.so',
         'vendor/lib64/hw/camera.qcom.so',
-        'vendor/lib64/hw/com.qti.chi.override.so',
         'vendor/lib64/com.qti.chiusecaseselector.so',
         'vendor/lib64/libcamerapostproc.so',
         'vendor/lib64/com.qualcomm.mcx.policy.xr.so',
@@ -185,6 +218,32 @@ blob_fixups: blob_fixups_user_type = {
     ): blob_fixup()
         .replace_needed('vendor.oplus.hardware.osense.client-V1-ndk_platform.so', 'vendor.oplus.hardware.osense.client-V1-ndk.so')
         .replace_needed('vendor.oplus.hardware.performance-V1-ndk_platform.so', 'vendor.oplus.hardware.performance-V1-ndk.so'),
+    'vendor/lib64/hw/com.qti.chi.override.so': blob_fixup()
+        .replace_needed('vendor.oplus.hardware.osense.client-V1-ndk_platform.so', 'vendor.oplus.hardware.osense.client-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.performance-V1-ndk_platform.so', 'vendor.oplus.hardware.performance-V1-ndk.so')
+        # AdvancedCameraUsecase::Destroy dereferences stale stream state while
+        # CameraX replaces a session. Skip clearing an already-dead stream's
+        # private field and destroying its corrupt cached PrunedUsecase. The
+        # live session and selected ChiUsecase still follow their normal
+        # teardown paths below these guards.
+        .call(
+            blob_fixup_replace_bytes,
+            offset=0x3E4E5C,
+            expected=b'\x9f\x11\x00\xf9',
+            replacement=b'\x1f\x20\x03\xd5',
+        )
+        .call(
+            blob_fixup_replace_bytes,
+            offset=0x3E4F9C,
+            expected=b'\xd3\x02\x40\xf9',
+            replacement=b'\xf4\x02\x15\x8b',
+        )
+        .call(
+            blob_fixup_replace_bytes,
+            offset=0x3E4FA0,
+            expected=b'\xf4\x02\x15\x8b',
+            replacement=b'\x09\x00\x00\x14',
+        ),
     'odm/lib64/liboplus-uah-client.so': blob_fixup()
         .replace_needed('vendor.oplus.hardware.urcc-V1-ndk_platform.so', 'vendor.oplus.hardware.urcc-V1-ndk.so'),
     'odm/lib64/liboplus-uah-client.so': blob_fixup()
