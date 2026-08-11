@@ -1,0 +1,28 @@
+# OPlusCamera compatibility patches
+
+This directory is the tracked, reverse-engineered compatibility layer for the
+stock Ferrari OPlusCamera APK.  `extract-files.py` applies every numbered patch
+to `system_ext/priv-app/OplusCamera/OplusCamera.apk` through
+`apktool_patch('patches/opluscamera')` when proprietary blobs are extracted.
+
+Keep patches numbered and narrowly scoped.  Do not replace the patched APK by
+hand: update this series, re-extract the blob, and commit the resulting vendor
+change through `patches/make-patches.sh`.
+
+| Patch | Purpose |
+| --- | --- |
+| `0001` | Removes OOS-only manifest assumptions that prevent use from the AOSP system-ext linker namespace. |
+| `0002` | Falls back to the platform typeface when the OOS typeface is unavailable. |
+| `0003` | Maps logical camera IDs before looking up camcorder profiles. |
+| `0004` | Uses a safe default camcorder profile when the requested profile is absent. |
+| `0005` | Avoids recorder setup when no profile can be resolved. |
+| `0006` | Launches the captured image or video in Google Photos and bypasses the obsolete OPlus Gallery presence check. |
+
+After changing this series, verify all of the following on a booted device with
+SELinux enforcing:
+
+1. The camera opens without a crash.
+2. A photo finalizes in MediaStore.
+3. A video finalizes in MediaStore.
+4. Tapping the latest photo and latest video thumbnails opens Google Photos.
+
