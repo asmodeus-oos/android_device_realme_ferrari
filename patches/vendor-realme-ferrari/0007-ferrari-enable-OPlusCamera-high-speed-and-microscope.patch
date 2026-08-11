@@ -1,7 +1,7 @@
 From 0d3e42b42ebba40641ae093f8de2700913034ad6 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Tue, 11 Aug 2026 17:21:14 +0000
-Subject: [PATCH 7/9] ferrari: enable OPlusCamera high-speed and microscope
+Subject: [PATCH 07/10] ferrari: enable OPlusCamera high-speed and microscope
  modes
 
 ---

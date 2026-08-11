@@ -1,7 +1,7 @@
 From f8cf8596d25fe1a2e9c015a4d5e1feca088bcae4 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 18:05:04 +0000
-Subject: [PATCH 5/9] ferrari: open OPlusCamera media in Google Photos
+Subject: [PATCH 05/10] ferrari: open OPlusCamera media in Google Photos
 
 ---
  proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk | 4 ++--
