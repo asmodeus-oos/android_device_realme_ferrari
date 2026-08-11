@@ -1,7 +1,7 @@
 From b38087fc07aedf672f485c91ac7cc609ffc5b3aa Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:42:55 +0000
-Subject: [PATCH 2/5] ferrari: store OplusCamera resources table uncompressed
+Subject: [PATCH 2/7] ferrari: store OplusCamera resources table uncompressed
 
 ---
  proprietary/product/priv-app/OplusCamera/OplusCamera.apk | 4 ++--
