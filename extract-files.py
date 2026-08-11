@@ -73,6 +73,8 @@ def blob_fixup_nop_call(
 blob_fixups: blob_fixups_user_type = {
     'system_ext/priv-app/OplusCamera/OplusCamera.apk': blob_fixup()
         .apktool_patch('patches/opluscamera'),
+    'system_ext/framework/com.oplus.camera.unit.sdk.jar': blob_fixup()
+        .apktool_patch('patches/camera-unit'),
     'odm/bin/hw/vendor.oplus.hardware.biometrics.fingerprint@2.1-service': blob_fixup()
         .replace_needed('android.hardware.biometrics.common-V1-ndk_platform.so', 'android.hardware.biometrics.common-V1-ndk.so')
         .replace_needed('android.hardware.biometrics.fingerprint-V1-ndk_platform.so', 'android.hardware.biometrics.fingerprint-V1-ndk.so')

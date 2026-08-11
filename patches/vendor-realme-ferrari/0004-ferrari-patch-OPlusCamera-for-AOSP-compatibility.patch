@@ -1,7 +1,7 @@
 From 8cf1154b629a4241315db26f87d64ed1678759d8 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 16:33:00 +0000
-Subject: [PATCH 4/8] ferrari: patch OPlusCamera for AOSP compatibility
+Subject: [PATCH 4/9] ferrari: patch OPlusCamera for AOSP compatibility
 
 ---
  proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk | 4 ++--
