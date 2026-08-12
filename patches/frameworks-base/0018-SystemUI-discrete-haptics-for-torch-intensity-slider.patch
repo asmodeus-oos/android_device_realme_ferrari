@@ -1,7 +1,7 @@
 From c637fc54dac197e7d8960d82c412081cb3d66cfd Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 14:39:45 +0000
-Subject: [PATCH 18/22] SystemUI: discrete haptics for torch intensity slider
+Subject: [PATCH 18/23] SystemUI: discrete haptics for torch intensity slider
 
 The torch slider falls back to the continuous rumble config; give it the
 same discrete tick feel as the brightness slider, with one click per
