@@ -1,7 +1,7 @@
 From e64a3bef50adf5b1dc644bb2def2b4f53df3d31a Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:11:36 +0000
-Subject: [PATCH 1/2] Evolver: expose spoofing controls on custom forks
+Subject: [PATCH 1/3] Evolver: expose spoofing controls on custom forks
 
 ---
  .../settings/fragments/miscellaneous/Spoofing.java         | 7 -------

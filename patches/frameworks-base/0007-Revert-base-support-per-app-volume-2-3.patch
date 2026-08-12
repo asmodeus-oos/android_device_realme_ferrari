@@ -1,7 +1,7 @@
 From 3c5e9a41f700e7ac61c21dd71d85a0eef907c14d Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 17:25:00 +0000
-Subject: [PATCH 07/20] Revert "base: support per-app volume [2/3]"
+Subject: [PATCH 07/21] Revert "base: support per-app volume [2/3]"
 
 This reverts commit 7d4d060cf1ec51f4f0b6188008e8cbe8f98612ef.
 ---

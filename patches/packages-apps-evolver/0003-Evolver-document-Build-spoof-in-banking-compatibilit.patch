@@ -1,0 +1,34 @@
+From 1311370eb720be724edbbe879c689b2a49a337dd Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 07:27:33 +0000
+Subject: [PATCH 3/3] Evolver: document Build spoof in banking compatibility
+ strings
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ res/values/evolution_strings.xml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/res/values/evolution_strings.xml b/res/values/evolution_strings.xml
+index 78aaaab..f4a5787 100644
+--- a/res/values/evolution_strings.xml
++++ b/res/values/evolution_strings.xml
+@@ -1021,12 +1021,12 @@
+     <string name="spoofing_pixel_props_summary">Spoof selected apps as a Pixel device to unlock Pixel-exclusive features</string>
+     <string name="spoofing_app_specific_category">App-specific overrides</string>
+     <string name="banking_compatibility_title">Banking app compatibility</string>
+-    <string name="banking_compatibility_summary">Hide developer options, ADB, and active USB state from selected apps</string>
+-    <string name="banking_compatibility_description">Select banking and payment apps that refuse to run when developer options or a USB connection is active. The real device settings remain unchanged.</string>
++    <string name="banking_compatibility_summary">Hide developer options, ADB, USB state, and debug build signals from selected apps</string>
++    <string name="banking_compatibility_description">Select banking and payment apps that refuse to run when developer options, USB debugging, or a debuggable build is visible. The real device settings remain unchanged.</string>
+     <string name="banking_compatibility_none_configured">No apps selected</string>
+     <string name="banking_compatibility_count">%1$d apps protected</string>
+     <string name="banking_compatibility_empty_description">No installed apps match the current search and system-app filter.</string>
+-    <string name="banking_compatibility_footer">This compatibility preset is independent of Play Integrity and TrickyStore. Only target an app in TrickyStore if it actually requires hardware-backed attestation.</string>
++    <string name="banking_compatibility_footer">This compatibility preset also rewrites Build debug/signing fields inside the app process. It is independent of Play Integrity and TrickyStore — only target an app in TrickyStore if it actually requires hardware-backed attestation.</string>
+     <string name="spoofing_photos_title">Google Photos</string>
+     <string name="spoofing_photos_summary">Spoof Google Photos as a Pixel XL</string>
+     <string name="spoofing_snap_title">Snapchat</string>
+-- 
+2.43.0
+

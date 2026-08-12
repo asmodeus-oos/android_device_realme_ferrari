@@ -1,7 +1,7 @@
 From e7350b9452e6492ce4c733c99ee2a3a976c85876 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 12 Aug 2026 06:45:13 +0000
-Subject: [PATCH 2/2] Evolver: add per-app banking compatibility picker
+Subject: [PATCH 2/3] Evolver: add per-app banking compatibility picker
 
 ---
  res/values/evolution_strings.xml              |   7 +

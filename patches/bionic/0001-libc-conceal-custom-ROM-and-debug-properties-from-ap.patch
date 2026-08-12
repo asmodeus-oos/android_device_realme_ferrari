@@ -1,7 +1,7 @@
 From cac8bca4c26fde3f3cf11251764dfbd39982eb43 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 12 Aug 2026 05:05:41 +0000
-Subject: [PATCH] libc: conceal custom ROM and debug properties from apps
+Subject: [PATCH 1/2] libc: conceal custom ROM and debug properties from apps
 
 ---
  libc/bionic/custom_rom_hide.cpp | 27 +++++++++++++++++++--------
