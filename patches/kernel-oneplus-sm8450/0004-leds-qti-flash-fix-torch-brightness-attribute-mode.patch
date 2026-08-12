@@ -1,7 +1,7 @@
 From 0bb1376f1545430c5a9f0c4f3662c9d78546aa36 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 14:39:41 +0000
-Subject: [PATCH 4/4] leds: qti-flash: fix torch brightness attribute mode
+Subject: [PATCH 4/5] leds: qti-flash: fix torch brightness attribute mode
 
 The __ATTR macro mode goes through VERIFY_OCTAL_PERMISSIONS, which
 rejects modes with S_IWOTH set, so 0666 breaks the build. The attribute

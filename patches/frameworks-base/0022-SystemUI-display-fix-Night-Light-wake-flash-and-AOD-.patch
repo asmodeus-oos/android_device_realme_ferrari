@@ -1,0 +1,172 @@
+From bd9b5411402f949dc77faf78132d1e4238d453a6 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 17:33:12 +0000
+Subject: [PATCH 22/22] SystemUI/display: fix Night Light wake flash and
+ AOD-off UDFPS pulse
+
+Re-apply color transforms on SCREEN_ON and wake to keyguard instead of
+selective-UI doze pulses when AOD is off, so Night Light and the FP icon
+survive display power transitions.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ .../android/systemui/doze/DozeTriggers.java   | 21 ++++++++-
+ .../display/color/ColorDisplayService.java    | 44 +++++++++++++++++++
+ .../color/DisplayTransformManager.java        | 12 +++++
+ 3 files changed, 76 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/doze/DozeTriggers.java b/packages/SystemUI/src/com/android/systemui/doze/DozeTriggers.java
+index 19c86133fcce..7eb9183ba6e3 100644
+--- a/packages/SystemUI/src/com/android/systemui/doze/DozeTriggers.java
++++ b/packages/SystemUI/src/com/android/systemui/doze/DozeTriggers.java
+@@ -411,7 +411,10 @@ public class DozeTriggers implements DozeMachine.Part {
+ 
+     private void gentleWakeUp(@DozeLog.Reason int reason) {
+         if (shouldVibrate(reason)) wakeVibrate();
+-        if (dozeInsteadOfWake(reason)) {
++        // ferrari/Oplus: with AOD off, doze pulses often leave a dim wallpaper-only
++        // frame (lockscreen/UDFPS alpha 0) even though FP still authenticates.
++        // Prefer a real interactive keyguard wake so clock + FP icon are visible.
++        if (dozeInsteadOfWake(reason) && mConfig.alwaysOnEnabled(mUserTracker.getUserId())) {
+             requestPulse(reason, true, null);
+             return;
+         }
+@@ -427,6 +430,14 @@ public class DozeTriggers implements DozeMachine.Part {
+         mMachine.wakeUp(reason);
+     }
+ 
++    /** Reasons that pulse to WITHOUT_UI / AUTH_UI and hide the lockscreen affordances. */
++    private static boolean isSelectiveUiPulseReason(int reason) {
++        return reason == DozeLog.REASON_SENSOR_UDFPS_LONG_PRESS
++                || reason == DozeLog.REASON_SENSOR_QUICK_PICKUP
++                || reason == DozeLog.PULSE_REASON_FINGERPRINT_PULSE_SHOW_AUTH_UI
++                || reason == DozeLog.PULSE_REASON_FINGERPRINT_PULSE_SHOW_FULL_UI;
++    }
++
+     private void wakeVibrate() {
+         VibrationEffect effect = VibrationEffect.createWaveform(new long[] { 0, 100 }, -1);
+         if (mVibrator.areAllEffectsSupported(VibrationEffect.EFFECT_CLICK) ==
+@@ -610,6 +621,14 @@ public class DozeTriggers implements DozeMachine.Part {
+     private void requestPulse(final int reason, boolean performedProxCheck,
+             Runnable onPulseSuppressedListener) {
+         Assert.isMainThread();
++        // With AOD off, selective-UI pulses (UDFPS / fingerprint auth) commonly
++        // produce a dim wallpaper-only frame without the fingerprint icon on
++        // this panel. Wake the interactive keyguard instead.
++        if (isSelectiveUiPulseReason(reason)
++                && !mConfig.alwaysOnEnabled(mUserTracker.getUserId())) {
++            gentleWakeUp(reason);
++            return;
++        }
+         mDozeHost.extendPulse(reason);
+ 
+         final DozeMachine.State dozeState = mMachine.getState();
+diff --git a/services/core/java/com/android/server/display/color/ColorDisplayService.java b/services/core/java/com/android/server/display/color/ColorDisplayService.java
+index bd5e9c36f760..7f0942c027de 100644
+--- a/services/core/java/com/android/server/display/color/ColorDisplayService.java
++++ b/services/core/java/com/android/server/display/color/ColorDisplayService.java
+@@ -126,6 +126,7 @@ public final class ColorDisplayService extends SystemService {
+     private static final int MSG_APPLY_DISPLAY_WHITE_BALANCE = 5;
+     private static final int MSG_APPLY_REDUCE_BRIGHT_COLORS = 6;
+     private static final int MSG_APPLY_UPDATE_DISPLAY_ENGINE = 7;
++    private static final int MSG_REAPPLY_COLOR_TRANSFORMS = 8;
+ 
+     /**
+      * Return value if a setting has not been set.
+@@ -201,6 +202,21 @@ public final class ColorDisplayService extends SystemService {
+ 
+     private NightDisplayAutoMode mNightDisplayAutoMode;
+ 
++    /**
++     * Re-applies composed color transforms after the display powers on. QCOM HWC
++     * can drop panel PCC across power transitions; SF may also skip an unchanged
++     * matrix. See MSG_REAPPLY_COLOR_TRANSFORMS.
++     */
++    private final BroadcastReceiver mDisplayPowerReceiver = new BroadcastReceiver() {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
++                mHandler.sendEmptyMessage(MSG_REAPPLY_COLOR_TRANSFORMS);
++            }
++        }
++    };
++    private boolean mDisplayPowerReceiverRegistered;
++
+     /**
+      * Map of color modes -> display composition colorspace
+      */
+@@ -587,6 +603,26 @@ public final class ColorDisplayService extends SystemService {
+         if (mDisplayEngineController.isAvailable(getContext())) {
+             mHandler.sendEmptyMessage(MSG_APPLY_UPDATE_DISPLAY_ENGINE);
+         }
++
++        if (!mDisplayPowerReceiverRegistered) {
++            final IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
++            getContext().registerReceiverForAllUsers(mDisplayPowerReceiver, filter,
++                    null /* permission */, mHandler, Context.RECEIVER_NOT_EXPORTED);
++            mDisplayPowerReceiverRegistered = true;
++        }
++    }
++
++    private void reapplyColorTransformsForDisplayPower() {
++        // After panel power-on, force SF→HWC to push Night Light / RBC again.
++        if (!mNightDisplayTintController.isActivated()
++                && !(mReduceBrightColorsTintController.isAvailable(getContext())
++                        && mReduceBrightColorsTintController.isActivated())) {
++            return;
++        }
++        final DisplayTransformManager dtm = getLocalService(DisplayTransformManager.class);
++        if (dtm != null) {
++            dtm.reapplyColorMatrix();
++        }
+     }
+ 
+     private void setUpColorInversionAccessibility() {
+@@ -624,6 +660,11 @@ public final class ColorDisplayService extends SystemService {
+     private void tearDown() {
+         Slog.d(TAG, "tearDown: currentUser=" + mCurrentUser);
+ 
++        if (mDisplayPowerReceiverRegistered) {
++            getContext().unregisterReceiver(mDisplayPowerReceiver);
++            mDisplayPowerReceiverRegistered = false;
++        }
++
+         if (mContentObserver != null) {
+             getContext().getContentResolver().unregisterContentObserver(mContentObserver);
+         }
+@@ -1990,6 +2031,9 @@ public final class ColorDisplayService extends SystemService {
+                     mDisplayEngineController.updateBalance(getContext(), mCurrentUser);
+                     applyTint(mDisplayEngineController, true);
+                     break;
++                case MSG_REAPPLY_COLOR_TRANSFORMS:
++                    reapplyColorTransformsForDisplayPower();
++                    break;
+             }
+         }
+     }
+diff --git a/services/core/java/com/android/server/display/color/DisplayTransformManager.java b/services/core/java/com/android/server/display/color/DisplayTransformManager.java
+index a4259984c3b8..0d102976a57e 100644
+--- a/services/core/java/com/android/server/display/color/DisplayTransformManager.java
++++ b/services/core/java/com/android/server/display/color/DisplayTransformManager.java
+@@ -171,6 +171,18 @@ public class DisplayTransformManager {
+         Slog.i(TAG, "SetColorMatrix level: " + level);
+     }
+ 
++    /**
++     * Force-push the composed color matrix to SurfaceFlinger even if unchanged.
++     * Needed after display power-on: HWC may have dropped PCC, but SF skips
++     * setColorTransform when colorMatrixChanged is false.
++     */
++    public void reapplyColorMatrix() {
++        synchronized (mColorMatrix) {
++            applyColorMatrix(computeColorMatrixLocked());
++        }
++        Slog.i(TAG, "ReapplyColorMatrix");
++    }
++
+     /**
+      * Sets the current Daltonization mode. This adjusts the color space to correct for or simulate
+      * various types of color blindness.
+-- 
+2.43.0
+

@@ -1,0 +1,381 @@
+From e5e6419a6a27b8493e1c574a0f848a23f174b9a4 Mon Sep 17 00:00:00 2001
+From: pjgowtham <pjgowtham@gmail.com>
+Date: Thu, 8 May 2025 00:16:06 +0530
+Subject: [PATCH 3/4] sdm: Support pixelworks soft iris color calibration
+
+Fixes display color calibration with devices that support
+pixelworks soft-iris feature. While switching color modes with
+stock render intents work, we still haven't reversed the part
+where the iris_soft display calibration firmware is generated
+during runtime at first boot.
+
+To enable this feature, set the below flag in device specific tree:
+$(call soong_config_set,qtidisplay,pxlw_vendor_namespace,vendor/oneplus/sm8450-common)
+
+Co-authored-by: RealJohnGalt <johngaltfirstrun@gmail.com>>
+Change-Id: I76d135eef8f0240f5d8f0316d2c4f0679d38c61c
+---
+ composer/Android.bp              | 15 ++++++--
+ composer/hwc_display_builtin.cpp | 10 ++++++
+ composer/hwc_display_builtin.h   |  1 +
+ composer/hwc_session.cpp         | 13 +++++++
+ composer/hwc_session.h           |  3 ++
+ include/pxlw_iris_feature.h      | 36 +++++++++++++++++++
+ include/pxlw_iris_wrapper.h      | 48 ++++++++++++++++++++++++++
+ sdm/libs/core/Android.bp         | 14 ++++++--
+ sdm/libs/core/color_manager.cpp  | 59 ++++++++++++++++++++++++++++++++
+ sdm/libs/core/color_manager.h    |  8 +++++
+ 10 files changed, 203 insertions(+), 4 deletions(-)
+ create mode 100644 include/pxlw_iris_feature.h
+ create mode 100644 include/pxlw_iris_wrapper.h
+
+diff --git a/composer/Android.bp b/composer/Android.bp
+index 918dd5e9..1e847ba4 100644
+--- a/composer/Android.bp
++++ b/composer/Android.bp
+@@ -21,7 +21,12 @@ cc_binary {
+         "-Wno-missing-field-initializers",
+         "-Wno-unused-parameter",
+         "-DLOG_TAG=\"SDM\"",
+-    ],
++    ] + select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
++        any @ value: [
++            "-DPXLW_IRIS",
++        ],
++        default: [],
++    }),
+ 
+     shared_libs: [
+         "libbinder",
+@@ -66,7 +71,13 @@ cc_binary {
+         "android.hardware.common-V2-ndk",
+         "vendor.qti.hardware.display.config-V5-ndk",
+         "vendor.qti.hardware.display.demura@2.0",
+-    ],
++    ] + select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
++        any @ value: [
++            "//" + value + ":libpwirisfeature",
++            "//" + value + ":libpwirishalwrapper",
++        ],
++        default: [],
++    }),
+ 
+     static_libs: [
+         "libaidlcommonsupport",
+diff --git a/composer/hwc_display_builtin.cpp b/composer/hwc_display_builtin.cpp
+index d9c644ef..9c9d513f 100644
+--- a/composer/hwc_display_builtin.cpp
++++ b/composer/hwc_display_builtin.cpp
+@@ -481,6 +481,16 @@ HWC2::Error HWCDisplayBuiltIn::SetColorModeWithRenderIntent(ColorMode mode, Rend
+     DLOGE("failed for mode = %d intent = %d", mode, intent);
+     return status;
+   }
++
++#ifdef PXLW_IRIS
++  auto *iris_wrapper = pxlw::PxlwIrisWrapper::GetInstance();
++  if (iris_wrapper) {
++    reinterpret_cast<pxlw::PxlwSoftirisWrapper*>(iris_wrapper)->SetColorModeWithRenderIntent(
++      0, 0, static_cast<android::hardware::graphics::common::V1_2::ColorMode>(mode),
++      static_cast<android::hardware::graphics::common::V1_1::RenderIntent>(intent));
++  }
++#endif
++
+   callbacks_->Refresh(id_);
+   return status;
+ }
+diff --git a/composer/hwc_display_builtin.h b/composer/hwc_display_builtin.h
+index 3fa946f4..d470a22c 100644
+--- a/composer/hwc_display_builtin.h
++++ b/composer/hwc_display_builtin.h
+@@ -49,6 +49,7 @@
+ #include "hwc_layers.h"
+ 
+ #include "gl_layer_stitch.h"
++#include <pxlw_iris_wrapper.h>
+ 
+ namespace sdm {
+ 
+diff --git a/composer/hwc_session.cpp b/composer/hwc_session.cpp
+index 32e671a1..46658a6c 100644
+--- a/composer/hwc_session.cpp
++++ b/composer/hwc_session.cpp
+@@ -2719,6 +2719,19 @@ int HWCSession::CreatePrimaryDisplay() {
+           DLOGW("Failed to load HWCColorManager.");
+         }
+ 
++#ifdef PXLW_IRIS
++        // This invokes IrisService constructor which is required in devices with soft-iris
++        // where they don't ship with vendor.pixelworks.hardware.display.iris-service
++        // or it's rc declaration.
++        auto *iris_wrapper = pxlw::PxlwIrisWrapper::GetInstance();
++        auto iris_feature = pxlw::IrisFeature::getInstance();
++        DisplayConfigVariableInfo config = {};
++        hwc_display[0]->GetDisplayAttributesForConfig(0, &config);
++        if (iris_wrapper && iris_feature->hasSoftIris()) {
++          reinterpret_cast<pxlw::PxlwSoftirisWrapper *>(iris_wrapper)
++              ->InitPrimaryDisplay(config.vsync_period_ns, config.x_pixels, config.y_pixels);
++        }
++#endif
+       } else {
+         DLOGE("Primary display creation has failed! status = %d", status);
+         return status;
+diff --git a/composer/hwc_session.h b/composer/hwc_session.h
+index 270275e9..99474dc2 100644
+--- a/composer/hwc_session.h
++++ b/composer/hwc_session.h
+@@ -62,6 +62,9 @@
+ #include "hwc_buffer_sync_handler.h"
+ #include "hwc_display_virtual_factory.h"
+ 
++#include <pxlw_iris_feature.h>
++#include <pxlw_iris_wrapper.h>
++
+ using ::android::hardware::Return;
+ using ::android::hardware::hidl_string;
+ using android::hardware::hidl_handle;
+diff --git a/include/pxlw_iris_feature.h b/include/pxlw_iris_feature.h
+new file mode 100644
+index 00000000..69dab44b
+--- /dev/null
++++ b/include/pxlw_iris_feature.h
+@@ -0,0 +1,36 @@
++/*
++ * SPDX-FileCopyrightText: 2025 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#pragma once
++
++namespace pxlw {
++
++class IrisFeature {
++ public:
++  static IrisFeature* getInstance();
++  static IrisFeature* getFeature();
++
++  ~IrisFeature() = default;
++
++  bool hasIrisDual();
++  bool hasSoftIris();
++  bool hasIris5Dual();
++  bool hasIris7Dual();
++  bool hasIrisDualWithoutCSC();
++  bool hasIris();
++  bool hasIris5();
++  bool hasIris7();
++
++ private:
++  IrisFeature() = default;
++  static IrisFeature* mInstance;
++
++  IrisFeature(const IrisFeature&) = delete;
++  IrisFeature& operator=(const IrisFeature&) = delete;
++  IrisFeature(IrisFeature&&) = delete;
++  IrisFeature& operator=(IrisFeature&&) = delete;
++};
++
++}  // namespace pxlw
+diff --git a/include/pxlw_iris_wrapper.h b/include/pxlw_iris_wrapper.h
+new file mode 100644
+index 00000000..97d66c8d
+--- /dev/null
++++ b/include/pxlw_iris_wrapper.h
+@@ -0,0 +1,48 @@
++/*
++ * SPDX-FileCopyrightText: 2025 The LineageOS Project
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#pragma once
++
++namespace android {
++namespace hardware {
++namespace graphics {
++namespace common {
++namespace V1_1 {
++enum class RenderIntent : int32_t;
++}
++namespace V1_2 {
++enum class ColorMode : int32_t;
++}
++}
++}
++}
++}
++
++namespace pxlw {
++
++class PxlwIrisWrapper {
++public:
++    static PxlwIrisWrapper* GetInstance();
++
++private:
++    PxlwIrisWrapper() = default;
++};
++
++class PxlwSoftirisWrapper {
++public:
++    PxlwSoftirisWrapper();
++    virtual ~PxlwSoftirisWrapper();
++
++    bool HasSoftIris();
++    int InitPrimaryDisplay(int32_t vsync_period_ns, uint32_t width, uint32_t height);
++    void SetColorModeWithRenderIntent(int32_t display_id, int32_t,
++                                    android::hardware::graphics::common::V1_2::ColorMode colorMode,
++                                    android::hardware::graphics::common::V1_1::RenderIntent renderIntent);
++
++private:
++    friend class PxlwIrisWrapper;
++};
++
++} // namespace pxlw
+diff --git a/sdm/libs/core/Android.bp b/sdm/libs/core/Android.bp
+index 9adf940c..a9b93fc4 100644
+--- a/sdm/libs/core/Android.bp
++++ b/sdm/libs/core/Android.bp
+@@ -16,7 +16,12 @@ cc_library_shared {
+         "-Wno-format",
+         "-Wno-unused-parameter",
+         "-DLOG_TAG=\"SDM\"",
+-    ],
++    ] + select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
++        any @ value: [
++            "-DPXLW_IRIS",
++        ],
++        default: [],
++    }),
+     shared_libs: [
+         "libdl",
+         "libdisplaydebug",
+@@ -24,7 +29,12 @@ cc_library_shared {
+         "libdrm",
+         "libdrmutils",
+         "libsdedrm",
+-    ],
++    ]+ select(soong_config_variable("qtidisplay", "pxlw_vendor_namespace"), {
++        any @ value: [
++            "//" + value + ":libpwirisfeature",
++        ],
++        default: [],
++    }),
+ 
+     srcs: [
+         "core_interface.cpp",
+diff --git a/sdm/libs/core/color_manager.cpp b/sdm/libs/core/color_manager.cpp
+index ca2de686..dcfe764d 100644
+--- a/sdm/libs/core/color_manager.cpp
++++ b/sdm/libs/core/color_manager.cpp
+@@ -39,6 +39,32 @@
+ 
+ #define __CLASS__ "ColorManager"
+ 
++#ifdef PXLW_IRIS
++#define LOAD_SYMBOL(handle, symbol_ptr, symbol_name) \
++    do { \
++        (symbol_ptr) = (decltype(symbol_ptr))dlsym((handle), (symbol_name)); \
++        if (!(symbol_ptr)) { \
++            DLOGE("Failed to load symbol '%s': %s", (symbol_name), dlerror()); \
++            if (iris_lib_handle_) { \
++                dlclose(iris_lib_handle_); \
++                iris_lib_handle_ = nullptr; \
++            } \
++            return kErrorResources; \
++        } else { \
++            DLOGD("Successfully loaded symbol '%s'", (symbol_name)); \
++        } \
++    } while (0)
++
++typedef void *(*PxlwIrisCreate)(const std::string &);
++typedef void (*PxlwIrisDestroy)(void *);
++typedef void (*PxlwIrisCommit)(void *);
++
++void *iris_lib_handle_ = nullptr;
++PxlwIrisCreate iris_create_ = nullptr;
++PxlwIrisDestroy iris_destroy_ = nullptr;
++PxlwIrisCommit iris_commit_ = nullptr;
++#endif
++
+ namespace sdm {
+ 
+ DynLib ColorManagerProxy::color_lib_;
+@@ -244,6 +270,14 @@ ColorManagerProxy *ColorManagerProxy::CreateColorManagerProxy(DisplayType type,
+         color_manager_proxy->curr_mode_.gamma = Transfer_sRGB;
+         color_manager_proxy->curr_mode_.intent = snapdragoncolor::kNative;
+       }
++
++#ifdef PXLW_IRIS
++      auto iris_feature = pxlw::IrisFeature::getInstance();
++      if (type == kPrimary && iris_feature->hasSoftIris()) {
++      PPHWAttributes &hw_attr = color_manager_proxy->pp_hw_attributes_;
++      color_manager_proxy->SetupSoftIrisLibrary(hw_attr.panel_name);
++      }
++#endif
+     }
+   }
+ 
+@@ -358,6 +392,12 @@ DisplayError ColorManagerProxy::Commit() {
+     ret = hw_intf_->SetPPFeatures(&pp_features_);
+   }
+ 
++#ifdef PXLW_IRIS
++  if (iris_commit_) {
++    iris_commit_(&pp_features_);
++  }
++#endif
++
+   return ret;
+ }
+ 
+@@ -1204,4 +1244,23 @@ DisplayError FeatureStateSerializedTrigger::GetParams(FeatureOps param_type,
+   return error;
+ }
+ 
++#ifdef PXLW_IRIS
++DisplayError ColorManagerProxy::SetupSoftIrisLibrary(const std::string &panel_name) {
++  DLOGI("ColorManager::%s: Entering SetupSoftIrisLibrary with panel name %s", __func__,
++        panel_name.c_str());
++  iris_lib_handle_ = dlopen("libpwirissoft.so", RTLD_NOW);
++  if (!iris_lib_handle_) {
++    DLOGE("ColorManager::%s: Failed to dlopen libpwirissoft.so: %s", __func__, dlerror());
++    return kErrorResources;
++  }
++
++  LOAD_SYMBOL(iris_lib_handle_, iris_create_, "pxlwIrisCreate");
++  LOAD_SYMBOL(iris_lib_handle_, iris_destroy_, "pxlwIrisDestroy");
++  LOAD_SYMBOL(iris_lib_handle_, iris_commit_, "pxlwIrisCommit");
++
++  iris_create_(panel_name);
++  return kErrorNone;
++}
++#endif
++
+ }  // namespace sdm
+diff --git a/sdm/libs/core/color_manager.h b/sdm/libs/core/color_manager.h
+index deb75459..2b25674b 100644
+--- a/sdm/libs/core/color_manager.h
++++ b/sdm/libs/core/color_manager.h
+@@ -45,6 +45,10 @@
+ 
+ #include "hw_interface.h"
+ 
++#ifdef PXLW_IRIS
++#include <pxlw_iris_feature.h>
++#endif
++
+ namespace sdm {
+ 
+ using snapdragoncolor::ColorMode;
+@@ -158,6 +162,10 @@ class ColorManagerProxy {
+   DisplayError ColorMgrSetLtmPccConfig(void* pcc_input, size_t size);
+   DisplayError ColorMgrSetSprIntf(std::shared_ptr<SPRIntf> spr_intf);
+ 
++#ifdef PXLW_IRIS
++  DisplayError SetupSoftIrisLibrary(const std::string& panel_name);
++#endif
++
+  protected:
+   ColorManagerProxy() {}
+   ColorManagerProxy(int32_t id, DisplayType type, HWInterface *intf,
+-- 
+2.43.0
+

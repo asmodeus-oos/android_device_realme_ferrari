@@ -1,7 +1,7 @@
 From 2f69d50c9fb622424f5cc2ffedea63e2893e0c3d Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 12 Aug 2026 07:27:33 +0000
-Subject: [PATCH 2/2] libc: hide partition test-keys and wireless ADB from apps
+Subject: [PATCH 2/3] libc: hide partition test-keys and wireless ADB from apps
 
 Paytm dumps getprop and matches vendor/odm/product build.tags and
 fingerprints that still say test-keys/userdebug. Spoof those plus

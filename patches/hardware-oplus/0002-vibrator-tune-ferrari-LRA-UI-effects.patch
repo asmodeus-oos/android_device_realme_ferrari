@@ -1,7 +1,7 @@
 From 75bbaebf628f96ac28201990c8a29239efb77f5b Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:11:36 +0000
-Subject: [PATCH 2/5] vibrator: tune ferrari LRA UI effects
+Subject: [PATCH 2/6] vibrator: tune ferrari LRA UI effects
 
 ---
  aidl/vibrator/qti/Vibrator.cpp                   | 10 +++++++---

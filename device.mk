@@ -106,6 +106,15 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/fstab.zram:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.zram
 
+# user builds: QTI USB init clears persist.vendor.usb.config and expects
+# persist.sys.usb.config to drive the gadget. Default to MTP so the phone
+# enumerates and shows the USB notification (adb-only defaults break when
+# USB debugging is off).
+ifeq ($(TARGET_BUILD_VARIANT),user)
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+    persist.sys.usb.config=mtp
+endif
+
 # Pass the calling package through the OPLUS vendor tag and preserve the
 # reserved pixel format used by the stock camera HAL.
 $(call soong_config_set,camera,package_name,com.oplus.packageName)

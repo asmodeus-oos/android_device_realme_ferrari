@@ -1,0 +1,35 @@
+From a93b1ba760eafa21003a5c50fb8bf058b01f6a98 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 10:32:14 +0000
+Subject: [PATCH 11/12] ferrari: expose UW and microscope cameras to
+ third-party apps
+
+Clear SYSTEM_CAMERA on ids 0-3 so 3p apps can switch lenses; keep SAT
+portrait logical (id 4) system-only.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ proprietary/odm/etc/camera/CameraHWConfiguration.config | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/proprietary/odm/etc/camera/CameraHWConfiguration.config b/proprietary/odm/etc/camera/CameraHWConfiguration.config
+index fa0e940..61ae923 100644
+--- a/proprietary/odm/etc/camera/CameraHWConfiguration.config
++++ b/proprietary/odm/etc/camera/CameraHWConfiguration.config
+@@ -703,10 +703,9 @@ Mode[4]      =    4;        12
+ 
+ [OemRequestAvailableCapabilities]
+     #3rd app can't access system camera
+-    # Evo: grant SYSTEM_CAMERA capability to all logical cameras so
+-    # distortion correction (dewarp/LDC via distortion.calibration) works
+-    # for third-party camera apps too, not just com.oplus.camera.
+-    SystemCamera =  1;  1;  1;  1;  1;
++    # Expose main/front/UW/microscope to 3p apps; keep SAT/portrait logical
++    # (id 4) system-only. LDC still needs persist distortionParams.bin.
++    SystemCamera =  0;  0;  0;  0;  1;
+ 
+ [EnableQuickSnapshot]
+     EnableCameraMode = 0x8001; 0x8010; 0x8011 #operation mode
+-- 
+2.43.0
+

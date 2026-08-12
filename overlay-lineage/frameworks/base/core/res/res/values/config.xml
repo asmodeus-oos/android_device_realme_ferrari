@@ -4,7 +4,8 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <!-- 8GB device: uncapped 1024 cached apps + no ZRAM caused reclaim thrash
-         and empty-process kills. Cap to a Qualcomm-class 8GB budget. -->
-    <integer name="config_customizedMaxCachedProcesses">64</integer>
+    <!-- 8GB + ZRAM: keep apps warm. 64/96 restarted too often; 1024 with no
+         swap thrashed reclaim. 256 is a soft ceiling that still bounds runaway
+         empty processes while ZRAM absorbs real memory pressure. -->
+    <integer name="config_customizedMaxCachedProcesses">256</integer>
 </resources>

@@ -1,7 +1,7 @@
 From 19d28eb75409faa229072f4c9e6a8c10ca15b7b5 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:06:52 +0000
-Subject: [PATCH 01/10] ferrari: add stock OPlusCamera proprietary components
+Subject: [PATCH 01/12] ferrari: add stock OPlusCamera proprietary components
 
 ---
  Android.bp                                    | 377 ++++++++++++++++++
@@ -476,14 +476,15 @@ diff --git a/proprietary/odm/etc/camera/CameraHWConfiguration.config b/proprieta
 index ec3852c..fa0e940 100644
 --- a/proprietary/odm/etc/camera/CameraHWConfiguration.config
 +++ b/proprietary/odm/etc/camera/CameraHWConfiguration.config
-@@ -703,7 +703,9 @@ Mode[4]      =    4;        12
+@@ -703,7 +703,10 @@ Mode[4]      =    4;        12
  
  [OemRequestAvailableCapabilities]
      #3rd app can't access system camera
 -    SystemCamera =  0;  0;  0;  0;  1;
-+    # Expose main/front/UW/microscope to 3p; keep SAT logical system-only.
-+    # LDC for 3p needs persist distortionParams.bin (see init.oplus.camera.rc).
-+    SystemCamera =  0;  0;  0;  0;  1;
++    # Evo: grant SYSTEM_CAMERA capability to all logical cameras so
++    # distortion correction (dewarp/LDC via distortion.calibration) works
++    # for third-party camera apps too, not just com.oplus.camera.
++    SystemCamera =  1;  1;  1;  1;  1;
  
  [EnableQuickSnapshot]
      EnableCameraMode = 0x8001; 0x8010; 0x8011 #operation mode

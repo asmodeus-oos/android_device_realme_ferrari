@@ -1,7 +1,7 @@
 From b2b21c78afec1d9215203b3dff098c97d5310067 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 17:59:14 +0000
-Subject: [PATCH 11/21] Revert "SystemUI: monet: Allow a more granular control
+Subject: [PATCH 11/22] Revert "SystemUI: monet: Allow a more granular control
  over shades [1/2]"
 
 This reverts commit d637379e735aa428d302cce25114cd1e79fa438c.

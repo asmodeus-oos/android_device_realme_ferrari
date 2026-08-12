@@ -1,7 +1,7 @@
 From 5cf23f27456ca51ac9a7223f0ac23fdeef682451 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Tue, 11 Aug 2026 19:20:26 +0000
-Subject: [PATCH 09/10] ferrari: fix OPlusCamera microscope captures
+Subject: [PATCH 09/12] ferrari: fix OPlusCamera microscope captures
 
 ---
  .../system_ext/framework/com.oplus.camera.unit.sdk.jar        | 4 ++--

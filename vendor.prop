@@ -5,11 +5,6 @@ bluetooth.device.default_name=realme GT 2 Pro
 ro.surface_flinger.set_idle_timer_ms=250
 ro.surface_flinger.set_touch_timer_ms=300
 
-# LMK: faster, less-stally reclaim under memory pressure (with ZRAM)
-ro.lmk.kill_timeout_ms=50
-ro.lmk.stall_limit_critical=40
-ro.lmk.filecache_min_kb=153600
-
 # Radio
 persist.radio.multisim.config=dsds
 

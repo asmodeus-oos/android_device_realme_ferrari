@@ -1,7 +1,7 @@
 From c7bb0e4ad46bd9545f11099ab773d6b933a63a0e Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Fri, 7 Aug 2026 07:01:38 +0000
-Subject: [PATCH 3/4] leds: qti-flash: make torch brightness nodes
+Subject: [PATCH 3/5] leds: qti-flash: make torch brightness nodes
  world-writable
 
 ferrari: the vendor CamX HAL cannot drive flashlight strength (its flash

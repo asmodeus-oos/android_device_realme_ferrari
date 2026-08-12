@@ -1,0 +1,42 @@
+From 0faa733c19374c24dc1960661c0a9586131baf1a Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 17:33:12 +0000
+Subject: [PATCH 3/3] libc: spoof verified boot / flash-locked props for app
+ UIDs
+
+Present green verifiedbootstate and locked flash to apps that gate UI
+on bootloader state.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ libc/bionic/custom_rom_hide.cpp | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/libc/bionic/custom_rom_hide.cpp b/libc/bionic/custom_rom_hide.cpp
+index cd5d65bcd..40609b667 100644
+--- a/libc/bionic/custom_rom_hide.cpp
++++ b/libc/bionic/custom_rom_hide.cpp
+@@ -626,7 +626,19 @@ static const PropOverride kSpoofedValueProps[] = {
+     {"persist.sys.evox_debug_enabled", "0"},
+     {"ro.build.type", "user"}, {"ro.build.tags", "release-keys"},
+     {"ro.secure", "1"}, {"ro.adb.secure", "1"}, {"persist.sys.usb.config", "mtp"},
+-    {"sys.usb.config", "mtp"}, {nullptr, nullptr}
++    {"sys.usb.config", "mtp"},
++    // Paytm (and similar) still fail "device integrity" after Play Integrity
++    // passes by reading unlocked-bootloader props directly. /proc/cmdline is
++    // already rewritten; keep SystemProperties consistent for app UIDs.
++    {"ro.boot.verifiedbootstate", "green"},
++    {"ro.boot.flash.locked", "1"},
++    {"ro.boot.vbmeta.device_state", "locked"},
++    {"ro.boot.warranty_bit", "0"},
++    {"ro.warranty_bit", "0"},
++    {"ro.secureboot.lockstate", "locked"},
++    {"sys.oem_unlock_allowed", "0"},
++    {"ro.oem_unlock_supported", "0"},
++    {nullptr, nullptr}
+ };
+ 
+ bool custom_rom_hide_should_spoof_prop(const char* name, char* value) {
+-- 
+2.43.0
+

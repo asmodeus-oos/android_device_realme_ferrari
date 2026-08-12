@@ -1,0 +1,33 @@
+From d5c8d843cc32797e077346d30c93c74390684db3 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 17:33:12 +0000
+Subject: [PATCH] SurfaceFlinger: always dirty HWC color matrix on client
+ updates
+
+After panel power-on the composed Night Light matrix is often unchanged
+in SF, so colorMatrixChanged stayed false and HWC never re-received PCC.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index d2d658ce82..d9b47956f5 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -7688,6 +7688,11 @@ status_t SurfaceFlinger::onTransact(uint32_t code, const Parcel& data, Parcel* r
+                 }
+ 
+                 updateColorMatrixLocked();
++                // Always re-send to HWC: after panel power-on the composed matrix is
++                // often unchanged in SF, so colorMatrixChanged would stay false and
++                // Night Light PCC would not be restored (cold tone flash on wake).
++                mCurrentState.colorMatrixChanged = true;
++                setTransactionFlags(eTransactionNeeded);
+                 return NO_ERROR;
+             }
+             case 1016: { // Unused.
+-- 
+2.43.0
+
