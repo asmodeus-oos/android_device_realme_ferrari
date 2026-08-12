@@ -7,6 +7,13 @@
     <!-- Enable auxiliary cameras selector. -->
     <bool name="config_enableAuxCameras">true</bool>
 
+    <!-- ferrari: 0 main, 1 front, 2 UW, 3 microscope, 4 portrait/SAT logical.
+         Ignore SAT/portrait logical only. UW + microscope stay selectable;
+         microscope may still label ~0.9× from sensor FOV math. -->
+    <string-array name="config_ignoredAuxCameraIds">
+        <item>4</item>
+    </string-array>
+
     <!-- An array of triplets made of (camera ID, qualities, frame rates).
          These video modes will be added to the available
          quality/frame rate combinations of a camera device.
@@ -39,7 +46,5 @@
         <item>1</item> <item>sd|hd|fhd</item> <item>30</item> -->
         <!-- UW -->
         <item>2</item> <item>sd|hd|fhd</item> <item>60</item>
-        <!-- Microscope
-        <item>3</item> <item>sd|hd</item> <item>30|60</item> -->
     </string-array>
 </resources>

@@ -6,6 +6,19 @@ on post-fs-data
     mkdir /data/vendor/camera_process 0777 camera camera
     mkdir /data/vendor/camera_process/livephoto 0777 camera camera
 
+    # camera.qcom / ArcSoft LDC open persist first; without this file 3p apps
+    # skip dewarp (barrel distortion → weak QR scan / soft edges).
+    mkdir /mnt/vendor/persist/camera 0771 system system
+    copy /odm/etc/camera/distortionParams.bin /mnt/vendor/persist/camera/distortionParams.bin
+    chown cameraserver audio /mnt/vendor/persist/camera/distortionParams.bin
+    chmod 0644 /mnt/vendor/persist/camera/distortionParams.bin
+
+    # Face-distortion (FDC) settings_* point at /sdcard/dff/... (stock path).
+    mkdir /data/media/0/dff 0775 media_rw media_rw
+    copy /odm/etc/camera/distortionParams.bin /data/media/0/dff/distortionParams.bin
+    chown media_rw media_rw /data/media/0/dff/distortionParams.bin
+    chmod 0644 /data/media/0/dff/distortionParams.bin
+
     # Give the camera app a public, read-only label for the CDSP shell while
     # keeping the rest of /vendor/dsp inaccessible to core domains.
     mkdir /mnt/vendor/dsp 0770 root root

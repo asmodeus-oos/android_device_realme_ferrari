@@ -476,15 +476,14 @@ diff --git a/proprietary/odm/etc/camera/CameraHWConfiguration.config b/proprieta
 index ec3852c..fa0e940 100644
 --- a/proprietary/odm/etc/camera/CameraHWConfiguration.config
 +++ b/proprietary/odm/etc/camera/CameraHWConfiguration.config
-@@ -703,7 +703,10 @@ Mode[4]      =    4;        12
+@@ -703,7 +703,9 @@ Mode[4]      =    4;        12
  
  [OemRequestAvailableCapabilities]
      #3rd app can't access system camera
 -    SystemCamera =  0;  0;  0;  0;  1;
-+    # Evo: grant SYSTEM_CAMERA capability to all logical cameras so
-+    # distortion correction (dewarp/LDC via distortion.calibration) works
-+    # for third-party camera apps too, not just com.oplus.camera.
-+    SystemCamera =  1;  1;  1;  1;  1;
++    # Expose main/front/UW/microscope to 3p; keep SAT logical system-only.
++    # LDC for 3p needs persist distortionParams.bin (see init.oplus.camera.rc).
++    SystemCamera =  0;  0;  0;  0;  1;
  
  [EnableQuickSnapshot]
      EnableCameraMode = 0x8001; 0x8010; 0x8011 #operation mode

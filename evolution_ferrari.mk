@@ -14,6 +14,11 @@ $(call inherit-product, device/realme/ferrari/device.mk)
 # Inherit Evolution X common config
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
+# Drop stale A16 Flex clock. Pixel CP2A dumps no longer ship it, and loading
+# the leftover plugin crashes Wallpaper & styles with:
+#   InvalidVersionException: Missing required dependency ClockProviderPlugin
+PRODUCT_PACKAGES := $(filter-out SystemUIClocks-Flex,$(PRODUCT_PACKAGES))
+
 PRODUCT_NAME := evolution_ferrari
 PRODUCT_DEVICE := ferrari
 PRODUCT_MANUFACTURER := realme
