@@ -1,0 +1,147 @@
+From 2625d2f088639f8458d13e32ee902e185463d148 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 05:15:01 +0000
+Subject: [PATCH 5/5] vibrator: calibrate predefined effects for ferrari LRA
+
+---
+ aidl/vibrator/qti/Vibrator.cpp | 93 +++++++++++++++++++++-------------
+ 1 file changed, 57 insertions(+), 36 deletions(-)
+
+diff --git a/aidl/vibrator/qti/Vibrator.cpp b/aidl/vibrator/qti/Vibrator.cpp
+index bd524a8..c5acd17 100644
+--- a/aidl/vibrator/qti/Vibrator.cpp
++++ b/aidl/vibrator/qti/Vibrator.cpp
+@@ -51,14 +51,6 @@ namespace hardware {
+ namespace vibrator {
+ 
+ #define STRONG_MAGNITUDE 0x7fff
+-#define MEDIUM_MAGNITUDE 0x5fff
+-#define LIGHT_MAGNITUDE 0x3fff
+-// Keep short UI feedback effects crisp on the SLA0815 LRA while preserving
+-// the requested effect strength.  The previous fixed 20% cap made clicks,
+-// ticks, and fingerprint success feedback nearly imperceptible.
+-#define UI_LIGHT_MAGNITUDE ((STRONG_MAGNITUDE * 24) / 100)
+-#define UI_MEDIUM_MAGNITUDE ((STRONG_MAGNITUDE * 32) / 100)
+-#define UI_STRONG_MAGNITUDE ((STRONG_MAGNITUDE * 40) / 100)
+ #define INVALID_VALUE -1
+ #define CUSTOM_DATA_LEN 3
+ #define NAME_BUF_SIZE 32
+@@ -317,41 +309,69 @@ int InputFFDevice::setAmplitude(uint8_t amplitude) {
+ }
+ 
+ int InputFFDevice::playEffect(int effectId, EffectStrength es, long* playLengthMs) {
++    // The SLA0815 is a powerful X-axis LRA and the FIFO waveforms already
++    // contain their own envelope.  Driving every predefined effect at the old
++    // 50/75/100% gains makes short UI feedback feel like notification buzzes.
++    // Give each semantic effect a calibrated ceiling instead.  Keep TICK at
++    // the proven 24/32/40% profile used by the brightness slider.
++    int lightPercent;
++    int mediumPercent;
++    int strongPercent;
++    switch (static_cast<Effect>(effectId)) {
++        case Effect::CLICK:
++            lightPercent = 26;
++            mediumPercent = 34;
++            strongPercent = 42;
++            break;
++        case Effect::DOUBLE_CLICK:
++            lightPercent = 24;
++            mediumPercent = 30;
++            strongPercent = 38;
++            break;
++        case Effect::TICK:
++            lightPercent = 24;
++            mediumPercent = 32;
++            strongPercent = 40;
++            break;
++        case Effect::THUD:
++            lightPercent = 30;
++            mediumPercent = 40;
++            strongPercent = 50;
++            break;
++        case Effect::POP:
++            lightPercent = 28;
++            mediumPercent = 38;
++            strongPercent = 46;
++            break;
++        case Effect::HEAVY_CLICK:
++            lightPercent = 34;
++            mediumPercent = 44;
++            strongPercent = 56;
++            break;
++        case Effect::TEXTURE_TICK:
++            lightPercent = 14;
++            mediumPercent = 18;
++            strongPercent = 24;
++            break;
++        default:
++            return -1;
++    }
++
++    int magnitudePercent;
+     switch (es) {
+         case EffectStrength::LIGHT:
+-            mCurrMagnitude = LIGHT_MAGNITUDE;
++            magnitudePercent = lightPercent;
+             break;
+         case EffectStrength::MEDIUM:
+-            mCurrMagnitude = MEDIUM_MAGNITUDE;
++            magnitudePercent = mediumPercent;
+             break;
+         case EffectStrength::STRONG:
+-            mCurrMagnitude = STRONG_MAGNITUDE;
++            magnitudePercent = strongPercent;
+             break;
+         default:
+             return -1;
+     }
+-
+-    // Android's click/tick feedback uses these predefined effects. Scale only
+-    // those effects so alerts and explicitly requested stronger vibrations are
+-    // not affected.
+-    if (effectId == static_cast<int>(Effect::CLICK) ||
+-        effectId == static_cast<int>(Effect::DOUBLE_CLICK) ||
+-        effectId == static_cast<int>(Effect::TICK) ||
+-        effectId == static_cast<int>(Effect::HEAVY_CLICK)) {
+-        switch (es) {
+-            case EffectStrength::LIGHT:
+-                mCurrMagnitude = UI_LIGHT_MAGNITUDE;
+-                break;
+-            case EffectStrength::MEDIUM:
+-                mCurrMagnitude = UI_MEDIUM_MAGNITUDE;
+-                break;
+-            case EffectStrength::STRONG:
+-                mCurrMagnitude = UI_STRONG_MAGNITUDE;
+-                break;
+-            default:
+-                return -1;
+-        }
+-    }
++    mCurrMagnitude = (STRONG_MAGNITUDE * magnitudePercent) / 100;
+ 
+     return play(effectId, INVALID_VALUE, playLengthMs);
+ }
+@@ -544,7 +564,8 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength es,
+         // Return magic value for play length so that we won't end up calling on() / off()
+         playLengthMs = 150;
+     } else {
+-        if (effect < Effect::CLICK || effect > Effect::HEAVY_CLICK)
++        if ((effect < Effect::CLICK || effect > Effect::HEAVY_CLICK) &&
++            effect != Effect::TEXTURE_TICK)
+             return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
+ 
+         if (es != EffectStrength::LIGHT && es != EffectStrength::MEDIUM &&
+@@ -573,8 +594,8 @@ ndk::ScopedAStatus Vibrator::getSupportedEffects(std::vector<Effect>* _aidl_retu
+         *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK, Effect::HEAVY_CLICK,
+                          Effect::TEXTURE_TICK};
+     } else {
+-        *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK,
+-                         Effect::THUD,  Effect::POP,          Effect::HEAVY_CLICK};
++        *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK, Effect::THUD,
++                         Effect::POP,   Effect::HEAVY_CLICK,  Effect::TEXTURE_TICK};
+     }
+     return ndk::ScopedAStatus::ok();
+ }
+-- 
+2.43.0
+

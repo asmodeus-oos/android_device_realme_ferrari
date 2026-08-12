@@ -1,7 +1,7 @@
 From a892b2f699f6380ea634a8855eaf9634aa6e1b66 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:11:36 +0000
-Subject: [PATCH 4/4] power: avoid waiting for absent OPLUS touch service
+Subject: [PATCH 4/5] power: avoid waiting for absent OPLUS touch service
 
 ---
  power/power-mode.cpp | 14 ++++++++++++--

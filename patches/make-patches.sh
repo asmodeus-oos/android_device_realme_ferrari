@@ -27,6 +27,7 @@ regenerate() {
 }
 
 regenerate frameworks/base 9b016cee78fd "$OUT/frameworks-base"
+regenerate frameworks/libs/systemui a7a3391 "$OUT/frameworks-libs-systemui"
 regenerate bionic 9d89221a0 "$OUT/bionic"
 regenerate kernel/oneplus/sm8450 2863ca29^ "$OUT/kernel-oneplus-sm8450"
 regenerate vendor/lineage 381d6e41^ "$OUT/vendor-lineage"

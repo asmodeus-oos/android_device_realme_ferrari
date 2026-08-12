@@ -26,6 +26,7 @@ BRANCH="ferrari-patches"
 
 declare -A REPO_PATHS=(
     [frameworks-base]="frameworks/base"
+    [frameworks-libs-systemui]="frameworks/libs/systemui"
     [bionic]="bionic"
     [kernel-oneplus-sm8450]="kernel/oneplus/sm8450"
     [vendor-lineage]="vendor/lineage"
