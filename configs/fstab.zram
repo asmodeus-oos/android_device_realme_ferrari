@@ -1,0 +1,2 @@
+# ferrari: compressed RAM swap (50% of DRAM). No writeback (kernel lacks ZRAM_WRITEBACK).
+/dev/block/zram0	none	swap	defaults	zramsize=50%

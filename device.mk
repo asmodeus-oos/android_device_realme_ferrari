@@ -98,7 +98,13 @@ PRODUCT_SYSTEM_EXT_PROPERTIES += \
     media.settings.xml=/vendor/etc/media_profiles_vendor.xml
 
 PRODUCT_PACKAGES += \
-    init.oplus.camera.rc
+    init.oplus.camera.rc \
+    init.ferrari.perf.rc
+
+# Compressed RAM swap (ZRAM). Module is present in vendor_dlkm but not loaded
+# by default; init.ferrari.perf.rc modprobes it and swapon_all this fstab.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/fstab.zram:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.zram
 
 # Pass the calling package through the OPLUS vendor tag and preserve the
 # reserved pixel format used by the stock camera HAL.
