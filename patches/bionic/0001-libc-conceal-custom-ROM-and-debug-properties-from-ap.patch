@@ -1,0 +1,66 @@
+From cac8bca4c26fde3f3cf11251764dfbd39982eb43 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 05:05:41 +0000
+Subject: [PATCH] libc: conceal custom ROM and debug properties from apps
+
+---
+ libc/bionic/custom_rom_hide.cpp | 27 +++++++++++++++++++--------
+ 1 file changed, 19 insertions(+), 8 deletions(-)
+
+diff --git a/libc/bionic/custom_rom_hide.cpp b/libc/bionic/custom_rom_hide.cpp
+index dc55edba9..a22397019 100644
+--- a/libc/bionic/custom_rom_hide.cpp
++++ b/libc/bionic/custom_rom_hide.cpp
+@@ -560,9 +560,25 @@ static const char* const kSpoofedEmptyProps[] = {
+     "init.svc.adb_root", "init.svc.adbd", "service.adb.root", nullptr
+ };
+ 
++static const char* const kHiddenPropPrefixes[] = {
++    "ro.evolution.", "ro.evolutionlegal.", "ro.lineage.", "ro.cm.", nullptr
++};
++
++static bool is_hidden_prop_name(const char* name) {
++    for (const char* const* prop = kSpoofedEmptyProps; *prop; ++prop) {
++        if (strcmp(name, *prop) == 0) return true;
++    }
++    for (const char* const* prefix = kHiddenPropPrefixes; *prefix; ++prefix) {
++        if (strncmp(name, *prefix, strlen(*prefix)) == 0) return true;
++    }
++    return false;
++}
++
+ struct PropOverride { const char* name; const char* value; };
+ static const PropOverride kSpoofedValueProps[] = {
+-    {"ro.debuggable", "0"}, {"ro.build.type", "user"}, {"ro.build.tags", "release-keys"},
++    {"ro.debuggable", "0"}, {"ro.force.debuggable", "0"},
++    {"persist.sys.evox_debug_enabled", "0"},
++    {"ro.build.type", "user"}, {"ro.build.tags", "release-keys"},
+     {"ro.secure", "1"}, {"ro.adb.secure", "1"}, {"persist.sys.usb.config", "mtp"},
+     {"sys.usb.config", "mtp"}, {nullptr, nullptr}
+ };
+@@ -572,9 +588,7 @@ bool custom_rom_hide_should_spoof_prop(const char* name, char* value) {
+     if (reinterpret_cast<uintptr_t>(name) < 0x1000000) return false;
+     if (reinterpret_cast<uintptr_t>(value) < 0x1000000) return false;
+     if (!is_app_process()) return false;
+-    for (const char* const* p = kSpoofedEmptyProps; *p; ++p) {
+-        if (strcmp(name, *p) == 0) { value[0] = '\0'; return true; }
+-    }
++    if (is_hidden_prop_name(name)) { value[0] = '\0'; return true; }
+     for (const PropOverride* o = kSpoofedValueProps; o->name; ++o) {
+         if (strcmp(name, o->name) == 0) { strcpy(value, o->value); return true; }
+     }
+@@ -584,10 +598,7 @@ bool custom_rom_hide_should_spoof_prop(const char* name, char* value) {
+ bool custom_rom_hide_should_hide_prop(const char* name) {
+     if (!name || reinterpret_cast<uintptr_t>(name) < 0x1000000) return false;
+     if (!is_app_process()) return false;
+-    for (const char* const* p = kSpoofedEmptyProps; *p; ++p) {
+-        if (strcmp(name, *p) == 0) return true;
+-    }
+-    return false;
++    return is_hidden_prop_name(name);
+ }
+ 
+ const char* custom_rom_hide_get_prop_override(const char* name) {
+-- 
+2.43.0
+
