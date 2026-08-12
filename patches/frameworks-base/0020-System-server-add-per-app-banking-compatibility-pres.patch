@@ -1,0 +1,254 @@
+From 508d02cd936e07cd94efa44f8fb94ed369705db5 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 06:45:10 +0000
+Subject: [PATCH 20/20] System server: add per-app banking compatibility preset
+
+---
+ .../server/am/BroadcastController.java        | 50 ++++++++++++++++++-
+ .../android/server/am/BroadcastRecord.java    | 13 +++--
+ .../android/server/wm/AxSandboxService.java   |  8 ++-
+ .../wm/sandbox/SettingsSpoofController.java   | 15 ++++++
+ .../server/am/BroadcastControllerTest.java    | 30 +++++++++++
+ 5 files changed, 108 insertions(+), 8 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/BroadcastController.java b/services/core/java/com/android/server/am/BroadcastController.java
+index eb3f3e88979f..e89d65d112b8 100644
+--- a/services/core/java/com/android/server/am/BroadcastController.java
++++ b/services/core/java/com/android/server/am/BroadcastController.java
+@@ -81,6 +81,7 @@ import android.content.pm.IPackageManager;
+ import android.content.pm.PackageManager;
+ import android.content.pm.ResolveInfo;
+ import android.content.pm.UserInfo;
++import android.hardware.usb.UsbManager;
+ import android.media.audiofx.AudioEffect;
+ import android.net.ConnectivityManager;
+ import android.net.Proxy;
+@@ -162,6 +163,8 @@ class BroadcastController {
+     // Maximum number of receivers an app can register.
+     private static final int MAX_RECEIVERS_ALLOWED_PER_APP = 1000;
+ 
++    private static final String BANKING_COMPATIBILITY = "banking_compatibility";
++
+     /**
+      * The number of top receivers/actions to dump when the number of receivers per app
+      * exceeds {@link #MAX_RECEIVERS_ALLOWED_PER_APP}.
+@@ -530,7 +533,9 @@ class BroadcastController {
+         }
+ 
+         // The first sticky in the list is returned directly back to the client.
+-        Intent sticky = allSticky != null ? allSticky.get(0).intent : null;
++        Intent sticky = allSticky != null
++                ? sanitizeUsbStateForPackage(allSticky.get(0).intent, callerPackage,
++                        mService) : null;
+         if (DEBUG_BROADCAST) Slog.v(TAG_BROADCAST, "Register receiver " + filter + ": " + sticky);
+         if (receiver == null) {
+             return sticky;
+@@ -619,7 +624,8 @@ class BroadcastController {
+                     if (sticky == null && (exported || originalStickyCallingUid == callingUid
+                             || ActivityManager.canAccessUnexportedComponents(
+                             originalStickyCallingUid))) {
+-                        sticky = broadcast.intent;
++                        sticky = sanitizeUsbStateForPackage(broadcast.intent, callerPackage,
++                                mService);
+                     }
+                     BroadcastQueue queue = mBroadcastQueue;
+                     BroadcastRecord r = new BroadcastRecord(queue, broadcast.intent, null, null,
+@@ -640,6 +646,46 @@ class BroadcastController {
+         }
+     }
+ 
++    /**
++     * Keep the real system USB state intact and specialize only the intent delivered to a package
++     * for which the user explicitly enabled the banking compatibility preset.
++     */
++    @VisibleForTesting
++    static Intent sanitizeUsbStateForPackage(Intent intent, String callerPackage,
++            boolean compatibilityEnabled) {
++        if (intent == null || callerPackage == null || !compatibilityEnabled
++                || !UsbManager.ACTION_USB_STATE.equals(intent.getAction())) {
++            return intent;
++        }
++
++        final Intent sanitized = new Intent(intent);
++        final Bundle extras = sanitized.getExtras();
++        if (extras != null) {
++            for (String key : new ArrayList<>(extras.keySet())) {
++                if (extras.get(key) instanceof Boolean) {
++                    extras.putBoolean(key, false);
++                }
++            }
++        }
++        return sanitized;
++    }
++
++    static Intent sanitizeUsbStateForPackage(Intent intent, String callerPackage,
++            ActivityManagerService service) {
++        // Avoid consulting the per-app sandbox for every non-USB broadcast.
++        final boolean compatibilityEnabled = intent != null
++                && UsbManager.ACTION_USB_STATE.equals(intent.getAction())
++                && isBankingCompatibilityEnabled(service, callerPackage);
++        return sanitizeUsbStateForPackage(intent, callerPackage, compatibilityEnabled);
++    }
++
++    static boolean isBankingCompatibilityEnabled(ActivityManagerService service,
++            String packageName) {
++        return service != null && packageName != null
++                && service.isSandboxSpoofSettingEnabled(packageName,
++                        BANKING_COMPATIBILITY);
++    }
++
+     @VisibleForTesting
+     String buildTooManyReceiversExceptionMessage(ReceiverList rl, String callerPackage) {
+         final HashMap<String, Integer> actionCounts = new HashMap<>();
+diff --git a/services/core/java/com/android/server/am/BroadcastRecord.java b/services/core/java/com/android/server/am/BroadcastRecord.java
+index bfd87004864e..bec365b55837 100644
+--- a/services/core/java/com/android/server/am/BroadcastRecord.java
++++ b/services/core/java/com/android/server/am/BroadcastRecord.java
+@@ -730,9 +730,12 @@ final class BroadcastRecord extends Binder {
+      *         to it being filtered away by {@link #filterExtrasForReceiver}.
+      */
+     @Nullable Intent getReceiverIntent(@NonNull Object receiver) {
+-        Intent newIntent = null;
++        final String receiverPackage = getReceiverPackageName(receiver);
++        final Intent receiverIntent = BroadcastController.sanitizeUsbStateForPackage(intent,
++                receiverPackage, queue != null ? queue.mService : null);
++        Intent newIntent = receiverIntent != intent ? receiverIntent : null;
+         if (filterExtrasForReceiver != null) {
+-            final Bundle extras = intent.getExtras();
++            final Bundle extras = receiverIntent.getExtras();
+             if (extras != null) {
+                 final int receiverUid = getReceiverUid(receiver);
+                 final Bundle filteredExtras = filterExtrasForReceiver.apply(receiverUid, extras);
+@@ -740,18 +743,18 @@ final class BroadcastRecord extends Binder {
+                     // Completely filtered; skip the broadcast!
+                     return null;
+                 } else {
+-                    newIntent = new Intent(intent);
++                    newIntent = new Intent(receiverIntent);
+                     newIntent.replaceExtras(filteredExtras);
+                 }
+             }
+         }
+         if (receiver instanceof ResolveInfo) {
+             if (newIntent == null) {
+-                newIntent = new Intent(intent);
++                newIntent = new Intent(receiverIntent);
+             }
+             newIntent.setComponent(((ResolveInfo) receiver).activityInfo.getComponentName());
+         }
+-        return (newIntent != null) ? newIntent : intent;
++        return (newIntent != null) ? newIntent : receiverIntent;
+     }
+ 
+     static boolean isCallerInstrumented(@Nullable ProcessRecord callerApp, int callingUid) {
+diff --git a/services/core/java/com/android/server/wm/AxSandboxService.java b/services/core/java/com/android/server/wm/AxSandboxService.java
+index b17b4d66cbf0..26686b4c998d 100644
+--- a/services/core/java/com/android/server/wm/AxSandboxService.java
++++ b/services/core/java/com/android/server/wm/AxSandboxService.java
+@@ -499,7 +499,13 @@ public final class AxSandboxService extends SystemService implements IAxSandboxS
+         if (mAppControlController == null) return null;
+         final String spoofedValue = SettingsSpoofController.getSpoofedValue(settingName);
+         if (spoofedValue == null) return null;
+-        if (!mAppControlController.isSpoofSettingEnabled(callingPackage, settingName)) {
++        final boolean settingEnabled =
++                mAppControlController.isSpoofSettingEnabled(callingPackage, settingName);
++        final boolean bankingPresetEnabled = SettingsSpoofController
++                .isBankingCompatibilitySetting(settingName)
++                && mAppControlController.isSpoofSettingEnabled(callingPackage,
++                        SettingsSpoofController.BANKING_COMPATIBILITY);
++        if (!settingEnabled && !bankingPresetEnabled) {
+             return null;
+         }
+         return spoofedValue;
+diff --git a/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java b/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java
+index 9adfc5af18be..cc20d68621c7 100644
+--- a/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java
++++ b/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java
+@@ -16,11 +16,16 @@
+ package com.android.server.wm.sandbox;
+ 
+ import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.Map;
++import java.util.Set;
+ 
+ public class SettingsSpoofController {
+ 
++    public static final String BANKING_COMPATIBILITY = "banking_compatibility";
++
+     private static final Map<String, String> SPOOFED_SETTINGS = new HashMap<>();
++    private static final Set<String> BANKING_COMPATIBILITY_SETTINGS = new HashSet<>();
+ 
+     static {
+         SPOOFED_SETTINGS.put("adb_enabled", "0");
+@@ -31,10 +36,20 @@ public class SettingsSpoofController {
+         SPOOFED_SETTINGS.put("accessibility_enabled", "0");
+         SPOOFED_SETTINGS.put("enabled_accessibility_services", "");
+         SPOOFED_SETTINGS.put("accessibility_display_inversion_enabled", "0");
++
++        BANKING_COMPATIBILITY_SETTINGS.add("adb_enabled");
++        BANKING_COMPATIBILITY_SETTINGS.add("development_settings_enabled");
++        BANKING_COMPATIBILITY_SETTINGS.add("adb_wifi_enabled");
++        BANKING_COMPATIBILITY_SETTINGS.add("package_verifier_user_consent");
++        BANKING_COMPATIBILITY_SETTINGS.add("verify_apps_over_usb");
+     }
+ 
+     public static String getSpoofedValue(String settingName) {
+         if (settingName == null) return null;
+         return SPOOFED_SETTINGS.get(settingName);
+     }
++
++    public static boolean isBankingCompatibilitySetting(String settingName) {
++        return settingName != null && BANKING_COMPATIBILITY_SETTINGS.contains(settingName);
++    }
+ }
+diff --git a/services/tests/mockingservicestests/src/com/android/server/am/BroadcastControllerTest.java b/services/tests/mockingservicestests/src/com/android/server/am/BroadcastControllerTest.java
+index cebef4bc0973..2a9a47098828 100644
+--- a/services/tests/mockingservicestests/src/com/android/server/am/BroadcastControllerTest.java
++++ b/services/tests/mockingservicestests/src/com/android/server/am/BroadcastControllerTest.java
+@@ -22,7 +22,9 @@ import static org.mockito.Mockito.doReturn;
+ import static org.mockito.Mockito.mock;
+ 
+ import android.content.Context;
++import android.content.Intent;
+ import android.content.IntentFilter;
++import android.hardware.usb.UsbManager;
+ import android.util.ArraySet;
+ 
+ import androidx.test.filters.SmallTest;
+@@ -116,4 +118,32 @@ public class BroadcastControllerTest {
+             assertThat(message).contains("receiver" + i + ": " + (i + 1) + " receivers");
+         }
+     }
++
++    @Test
++    public void sanitizeUsbStateForPackage_enabledPackageGetsDisconnectedCopy() {
++        Intent original = new Intent(UsbManager.ACTION_USB_STATE)
++                .putExtra(UsbManager.USB_CONNECTED, true)
++                .putExtra(UsbManager.USB_CONFIGURED, true)
++                .putExtra(UsbManager.USB_FUNCTION_ADB, true);
++
++        Intent sanitized = BroadcastController.sanitizeUsbStateForPackage(
++                original, TEST_PKG, true);
++
++        assertThat(sanitized).isNotSameInstanceAs(original);
++        assertThat(sanitized.getBooleanExtra(UsbManager.USB_CONNECTED, true)).isFalse();
++        assertThat(sanitized.getBooleanExtra(UsbManager.USB_CONFIGURED, true)).isFalse();
++        assertThat(sanitized.getBooleanExtra(UsbManager.USB_FUNCTION_ADB, true)).isFalse();
++        assertThat(original.getBooleanExtra(UsbManager.USB_CONNECTED, false)).isTrue();
++    }
++
++    @Test
++    public void sanitizeUsbStateForPackage_disabledPackageGetsOriginal() {
++        Intent original = new Intent(UsbManager.ACTION_USB_STATE)
++                .putExtra(UsbManager.USB_CONNECTED, true);
++
++        Intent result = BroadcastController.sanitizeUsbStateForPackage(original, TEST_PKG, false);
++
++        assertThat(result).isSameInstanceAs(original);
++        assertThat(result.getBooleanExtra(UsbManager.USB_CONNECTED, false)).isTrue();
++    }
+ }
+-- 
+2.43.0
+
