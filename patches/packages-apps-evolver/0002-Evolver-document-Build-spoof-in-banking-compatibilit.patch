@@ -1,7 +1,7 @@
-From 1311370eb720be724edbbe879c689b2a49a337dd Mon Sep 17 00:00:00 2001
+From 076cd45f01a1b31100eccfc6733ae1a7d041ed1f Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 12 Aug 2026 07:27:33 +0000
-Subject: [PATCH 3/3] Evolver: document Build spoof in banking compatibility
+Subject: [PATCH 2/3] Evolver: document Build spoof in banking compatibility
  strings
 
 Co-authored-by: Cursor <cursoragent@cursor.com>
@@ -10,10 +10,10 @@ Co-authored-by: Cursor <cursoragent@cursor.com>
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/res/values/evolution_strings.xml b/res/values/evolution_strings.xml
-index 78aaaab..f4a5787 100644
+index c6dd787..cf0b13c 100644
 --- a/res/values/evolution_strings.xml
 +++ b/res/values/evolution_strings.xml
-@@ -1021,12 +1021,12 @@
+@@ -1073,12 +1073,12 @@
      <string name="spoofing_pixel_props_summary">Spoof selected apps as a Pixel device to unlock Pixel-exclusive features</string>
      <string name="spoofing_app_specific_category">App-specific overrides</string>
      <string name="banking_compatibility_title">Banking app compatibility</string>

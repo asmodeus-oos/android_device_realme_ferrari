@@ -1,7 +1,7 @@
-From 189ca3ef5a55c094689440b61f05a582c4f65c92 Mon Sep 17 00:00:00 2001
+From de78a7389dd558ebadb9ec5867d945e181a50e36 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 17:10:24 +0000
-Subject: [PATCH 05/23] frameworks: remove unavailable optional service
+Subject: [PATCH 04/14] frameworks: remove unavailable optional service
  integrations
 
 ---
@@ -482,7 +482,7 @@ index af5c3a5484ec..000000000000
 -    }
 -}
 diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
-index 33cc4c435e26..7baca122508e 100644
+index 36de95439efe..bed5b2f399ff 100644
 --- a/services/java/com/android/server/SystemServer.java
 +++ b/services/java/com/android/server/SystemServer.java
 @@ -176,7 +176,6 @@ import com.android.server.criticalevents.CriticalEventLog;
@@ -493,7 +493,7 @@ index 33cc4c435e26..7baca122508e 100644
  import com.android.server.display.color.ColorDisplayService;
  import com.android.server.dreams.DreamManagerService;
  import com.android.server.emergency.EmergencyAffordanceService;
-@@ -2899,10 +2898,6 @@ public final class SystemServer implements Dumpable {
+@@ -2905,10 +2904,6 @@ public final class SystemServer implements Dumpable {
                  t.traceEnd();
              }
  

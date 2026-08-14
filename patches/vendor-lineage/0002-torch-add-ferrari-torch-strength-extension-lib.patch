@@ -1,4 +1,4 @@
-From 605187599eac78673128063c371cb04e237ddf32 Mon Sep 17 00:00:00 2001
+From 4fd4eece72f82ae8b4864ccbe5a4bd5a264e3059 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 12:31:47 +0000
 Subject: [PATCH 2/2] torch: add ferrari torch strength extension lib

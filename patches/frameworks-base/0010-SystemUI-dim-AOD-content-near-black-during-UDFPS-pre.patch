@@ -1,18 +1,18 @@
-From b0689c14e0058381672ee22c51bdfdf969a2e85b Mon Sep 17 00:00:00 2001
+From cc15920be4ee7a50650b13df2184c2376b2acd6e Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 15:18:51 +0000
-Subject: [PATCH 19/23] SystemUI: dim AOD content near-black during UDFPS press
+Subject: [PATCH 10/14] SystemUI: dim AOD content near-black during UDFPS press
 
 While dozing the panel luminance comes from the AOD (LP1) mode, not from
 the backlight value, so the brightness LUT is not calibrated for it and
 the masked HBM still visibly brightens the AOD content. Use a fixed
 near-black dim layer during the fingerprint press instead.
 ---
- .../systemui/biometrics/UdfpsHelper.kt        | 28 +++++++++++++++----
- 1 file changed, 23 insertions(+), 5 deletions(-)
+ .../systemui/biometrics/UdfpsHelper.kt        | 30 +++++++++++++++----
+ 1 file changed, 24 insertions(+), 6 deletions(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
-index 5a91dccbe361..4ed8f8a147bc 100644
+index f5cdbfaeaf3d..4e256c329037 100644
 --- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
 +++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
 @@ -40,6 +40,8 @@ import kotlinx.coroutines.launch
@@ -24,7 +24,7 @@ index 5a91dccbe361..4ed8f8a147bc 100644
  /**
   * Facilitates implementations that use GHBM where dim layer
   * and pressed icon aren't controlled by kernel
-@@ -153,18 +155,34 @@ class UdfpsHelper(
+@@ -144,18 +146,34 @@ class UdfpsHelper(
          ).div(255.0f)
      }
  
@@ -40,6 +40,9 @@ index 5a91dccbe361..4ed8f8a147bc 100644
      private fun brightnessToAlpha() {
 -        val adjustedBrightness =
 -            (currentBrightness.coerceIn(minBrightness, maxBrightness) * maxPanelBrightness).toInt()
+-
+-        val targetAlpha = brightnessAlphaMap[adjustedBrightness]?.div(255.0f)
+-            ?: interpolateAlpha(adjustedBrightness)
 +        val targetAlpha: Float
 +        if (isDozeActive()) {
 +            // While dozing the panel luminance comes from the AOD (LP1) mode,
@@ -52,9 +55,7 @@ index 5a91dccbe361..4ed8f8a147bc 100644
 +            val adjustedBrightness =
 +                (currentBrightness.coerceIn(minBrightness, maxBrightness) * maxPanelBrightness)
 +                    .toInt()
- 
--        val targetAlpha = brightnessAlphaMap[adjustedBrightness]?.div(255.0f)
--            ?: interpolateAlpha(adjustedBrightness)
++
 +            targetAlpha = brightnessAlphaMap[adjustedBrightness]?.div(255.0f)
 +                ?: interpolateAlpha(adjustedBrightness)
 +        }

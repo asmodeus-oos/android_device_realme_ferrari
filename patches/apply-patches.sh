@@ -9,15 +9,18 @@
 # Behavior:
 #   - Repo dirs are matched to the patch dir names (frameworks/base,
 #     kernel/oneplus/sm8450, vendor/lineage).
-#   - A local branch "ferrari-patches" is (re)created at the current HEAD
-#     if not already checked out, so git am has a branch to commit onto.
+#   - A local branch "ferrari-patches" is reset to the synced manifest
+#     revision (m/cnb, else evo/cnb) so a previous partial apply cannot
+#     block new patches. Forks without those refs keep the current HEAD.
 #   - Patches already applied (same commit subject in history) are skipped.
 #   - If the newest patch in a directory is already in history (typical
 #     for bubundas17 ferrari-fixes forks, or a depth=1 clone of them),
 #     the whole directory is skipped. Re-applying LFS pointer diffs onto
 #     smudged binaries would conflict.
-#   - Remaining patches are applied with `git am --3way` so upstream
-#     context changes can be merged automatically when possible.
+#   - Remaining patches are applied with `git am --keep-cr`, falling back
+#     to `--3way` only if the straight apply fails. --3way needs blob SHAs
+#     from the patch index lines; shallow clones after an upstream rebase
+#     often lack those objects.
 #
 # Regenerate the patch files after any source change with
 # device/realme/ferrari/patches/make-patches.sh
@@ -88,12 +91,28 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
 
     git -C "$target" am --abort >/dev/null 2>&1 || true
 
-    cur="$(git -C "$target" rev-parse --abbrev-ref HEAD 2>/dev/null)"
-    if [ "$cur" != "$BRANCH" ]; then
-        if ! git -C "$target" checkout -q -B "$BRANCH"; then
-            echo "FAIL: $repo_name: cannot create branch $BRANCH (uncommitted changes?)"
+    # After repo sync, always recreate ferrari-patches from the synced
+    # manifest revision so a previous partial apply cannot block new patches.
+    start_ref=""
+    if git -C "$target" rev-parse -q --verify m/cnb >/dev/null; then
+        start_ref="m/cnb"
+    elif git -C "$target" rev-parse -q --verify evo/cnb >/dev/null; then
+        start_ref="evo/cnb"
+    fi
+    if [ -n "$start_ref" ]; then
+        if ! git -C "$target" checkout -q -B "$BRANCH" "$start_ref"; then
+            echo "FAIL: $repo_name: cannot reset $BRANCH to $start_ref (uncommitted changes?)"
             failed=$((failed + 1))
             continue
+        fi
+    else
+        cur="$(git -C "$target" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+        if [ "$cur" != "$BRANCH" ]; then
+            if ! git -C "$target" checkout -q -B "$BRANCH"; then
+                echo "FAIL: $repo_name: cannot create branch $BRANCH (uncommitted changes?)"
+                failed=$((failed + 1))
+                continue
+            fi
         fi
     fi
 
@@ -125,7 +144,8 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
         fi
         # Several upstream OPLUS framework stubs use CRLF. Preserve carriage
         # returns while parsing mail patches so their context stays exact.
-        if git -C "$target" am --3way --keep-cr "$patch"; then
+        if git -C "$target" am --keep-cr "$patch" \
+                || { git -C "$target" am --abort >/dev/null 2>&1; git -C "$target" am --3way --keep-cr "$patch"; }; then
             echo "applied: $repo_name/$name"
             applied=$((applied + 1))
         else

@@ -1,0 +1,40 @@
+From 37a7acdefa53b875c5efa62d13b9d5621bafacbe Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Fri, 14 Aug 2026 16:32:17 +0000
+Subject: [PATCH 3/3] Evolver: always force-stop spoofed packages on toggle
+
+getRunningAppProcesses() is often empty for other UIDs, so Photos
+would keep the old spoof state after the switch changes.
+---
+ .../fragments/miscellaneous/Spoofing.java         | 15 +++++----------
+ 1 file changed, 5 insertions(+), 10 deletions(-)
+
+diff --git a/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java b/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java
+index c5aad54..cc45583 100644
+--- a/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java
++++ b/src/org/evolution/settings/fragments/miscellaneous/Spoofing.java
+@@ -109,16 +109,11 @@ public class Spoofing extends SettingsPreferenceFragment implements
+             ActivityManager am = (ActivityManager)
+                     getContext().getSystemService(Context.ACTIVITY_SERVICE);
+             if (am == null) return;
+-            for (ActivityManager.RunningAppProcessInfo proc : am.getRunningAppProcesses()) {
+-                if (proc.pkgList == null) continue;
+-                for (String p : proc.pkgList) {
+-                    if (pkg.equals(p)) {
+-                        am.forceStopPackage(pkg);
+-                        Log.d(TAG, "Killed: " + pkg);
+-                        return;
+-                    }
+-                }
+-            }
++            // Always force-stop. getRunningAppProcesses() is often empty for
++            // other UIDs, so a running Photos process would otherwise keep the
++            // old spoof state after the toggle changes.
++            am.forceStopPackage(pkg);
++            Log.d(TAG, "Killed: " + pkg);
+         } catch (Exception e) {
+             Log.e(TAG, "Kill failed: " + pkg, e);
+         }
+-- 
+2.43.0
+

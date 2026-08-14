@@ -1,7 +1,7 @@
-From 3c5e9a41f700e7ac61c21dd71d85a0eef907c14d Mon Sep 17 00:00:00 2001
+From 6915481bc50eacbf1fd3491606388565c888de4d Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 17:25:00 +0000
-Subject: [PATCH 07/23] Revert "base: support per-app volume [2/3]"
+Subject: [PATCH 06/14] Revert "base: support per-app volume [2/3]"
 
 This reverts commit 7d4d060cf1ec51f4f0b6188008e8cbe8f98612ef.
 ---
@@ -27,10 +27,10 @@ This reverts commit 7d4d060cf1ec51f4f0b6188008e8cbe8f98612ef.
  delete mode 100644 packages/SystemUI/src/com/android/systemui/volume/dialog/appvolume/ui/viewmodel/VolumeDialogAppVolumeButtonViewModel.kt
 
 diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
-index 5ba53f00b5e1..e880a6265133 100644
+index 9adc25089a08..d4e3e82ed3e7 100644
 --- a/core/java/android/provider/Settings.java
 +++ b/core/java/android/provider/Settings.java
-@@ -7086,11 +7086,6 @@ public final class Settings {
+@@ -7080,11 +7080,6 @@ public final class Settings {
          public static final String STATUS_BAR_CLOCK_DATE_FORMAT = "status_bar_clock_date_format";
  
          /**
@@ -42,7 +42,7 @@ index 5ba53f00b5e1..e880a6265133 100644
          /**
           * Whether the phone vibrates on call connect
           * @hide
-@@ -23651,12 +23646,6 @@ public final class Settings {
+@@ -24202,12 +24197,6 @@ public final class Settings {
          @SdkConstant(SdkConstant.SdkConstantType.ACTIVITY_INTENT_ACTION)
          public static final String ACTION_VOLUME =
                  "android.settings.panel.action.VOLUME";
