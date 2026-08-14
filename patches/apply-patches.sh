@@ -21,6 +21,9 @@
 #     to `--3way` only if the straight apply fails. --3way needs blob SHAs
 #     from the patch index lines; shallow clones after an upstream rebase
 #     often lack those objects.
+#   - vendor/oneplus/aconfig is not a git repo. The overlay in
+#     patches/vendor-oneplus-aconfig/ is copied into place (LHDC off,
+#     flashlight strength on for the cp2a release).
 #
 # Regenerate the patch files after any source change with
 # device/realme/ferrari/patches/make-patches.sh
@@ -82,6 +85,10 @@ subject_in_history() {
 
 for repo_dir in "$SCRIPT_DIR"/*/; do
     repo_name="$(basename "$repo_dir")"
+    # Overlays / non-git trees: handled after the git-am loop.
+    case "$repo_name" in
+        vendor-oneplus-aconfig|opluscamera) continue ;;
+    esac
     target="$ROOT/${REPO_PATHS[$repo_name]:-$repo_name}"
 
     if [ ! -e "$target/.git" ]; then
@@ -155,6 +162,24 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
         fi
     done
 done
+
+# vendor/oneplus/aconfig is a Soong root-namespace overlay, not a git repo.
+aconfig_src="$SCRIPT_DIR/vendor-oneplus-aconfig"
+aconfig_dst="$ROOT/vendor/oneplus/aconfig"
+if [ -d "$aconfig_src" ]; then
+    mkdir -p "$aconfig_dst/com.android.bluetooth.flags" \
+             "$aconfig_dst/com.android.systemui.flags"
+    cp -a "$aconfig_src/Android.bp" "$aconfig_dst/Android.bp"
+    cp -a "$aconfig_src/com.android.bluetooth.flags/." \
+        "$aconfig_dst/com.android.bluetooth.flags/"
+    cp -a "$aconfig_src/com.android.systemui.flags/." \
+        "$aconfig_dst/com.android.systemui.flags/"
+    echo "applied: vendor-oneplus-aconfig -> vendor/oneplus/aconfig"
+    applied=$((applied + 1))
+else
+    echo "FAILED: vendor-oneplus-aconfig overlay missing at $aconfig_src"
+    failed=$((failed + 1))
+fi
 
 echo
 echo "Summary: $applied applied, $skipped skipped, $failed failed"

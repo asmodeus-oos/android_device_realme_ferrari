@@ -95,9 +95,10 @@ Two kinds of changes, two routes — never mix them:
 
 Caveats:
 
-- `vendor/oneplus/aconfig/` and `hardware/qcom-caf/sm8450/` are not git
-  repos — they cannot be patched or pushed; changes there must be re-applied
-  manually after a sync. Prefer a patched location when possible.
+- `vendor/oneplus/aconfig/` is not a git repo. Canonical files are in
+  `patches/vendor-oneplus-aconfig/` and are copied by `apply-patches.sh`.
+- `hardware/qcom-caf/sm8450/` is a container; git subprojects are patched
+  via `make-patches.sh` / `apply-patches.sh`.
 - `frameworks/base` is deliberately **not forked** — it tracks upstream
   Evolution X only.
 - `kernel/oneplus/sm8450` may be pushed to `bubundas17` only together with a
