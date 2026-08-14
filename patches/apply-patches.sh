@@ -12,6 +12,10 @@
 #   - A local branch "ferrari-patches" is (re)created at the current HEAD
 #     if not already checked out, so git am has a branch to commit onto.
 #   - Patches already applied (same commit subject in history) are skipped.
+#   - If the newest patch in a directory is already in history (typical
+#     for bubundas17 ferrari-fixes forks, or a depth=1 clone of them),
+#     the whole directory is skipped. Re-applying LFS pointer diffs onto
+#     smudged binaries would conflict.
 #   - Remaining patches are applied with `git am --3way` so upstream
 #     context changes can be merged automatically when possible.
 #
@@ -48,6 +52,31 @@ applied=0
 skipped=0
 failed=0
 
+# First line of Subject: plus RFC 2822 wrapped continuations.
+patch_subject() {
+    awk '
+        BEGIN { s = "" }
+        /^Subject: / {
+            sub(/^Subject: \[PATCH[^]]*\] /, "")
+            s = $0
+            next
+        }
+        s != "" && /^[ \t]/ {
+            sub(/^[ \t]+/, " ")
+            s = s $0
+            next
+        }
+        s != "" { exit }
+        END { print s }
+    ' "$1"
+}
+
+subject_in_history() {
+    local target="$1" subject="$2"
+    [ -n "$subject" ] || return 1
+    git -C "$target" log --format=%s HEAD | grep -qF "$subject"
+}
+
 for repo_dir in "$SCRIPT_DIR"/*/; do
     repo_name="$(basename "$repo_dir")"
     target="$ROOT/${REPO_PATHS[$repo_name]:-$repo_name}"
@@ -56,6 +85,8 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
         echo "skip: $repo_name (no git repo at $target)"
         continue
     fi
+
+    git -C "$target" am --abort >/dev/null 2>&1 || true
 
     cur="$(git -C "$target" rev-parse --abbrev-ref HEAD 2>/dev/null)"
     if [ "$cur" != "$BRANCH" ]; then
@@ -66,10 +97,28 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
         fi
     fi
 
-    for patch in "$repo_dir"*.patch; do
+    shopt -s nullglob
+    patches=("$repo_dir"*.patch)
+    shopt -u nullglob
+    if [ ${#patches[@]} -eq 0 ]; then
+        continue
+    fi
+
+    # Forks already on ferrari-fixes (or a depth=1 clone of it) already
+    # contain every patch in the tree. Re-applying LFS pointer diffs onto
+    # smudged binaries conflicts. If the newest patch is in history, skip
+    # the whole directory.
+    last_subject="$(patch_subject "${patches[-1]}")"
+    if subject_in_history "$target" "$last_subject"; then
+        echo "already applied: $repo_name (tree includes: $last_subject)"
+        skipped=$((skipped + ${#patches[@]}))
+        continue
+    fi
+
+    for patch in "${patches[@]}"; do
         name="$(basename "$patch")"
-        subject="$(sed -n 's/^Subject: \[PATCH[^]]*\] //p' "$patch" | head -n1)"
-        if [ -n "$subject" ] && git -C "$target" log --format=%s HEAD | grep -qF "$subject"; then
+        subject="$(patch_subject "$patch")"
+        if subject_in_history "$target" "$subject"; then
             echo "already applied: $repo_name/$name"
             skipped=$((skipped + 1))
             continue
