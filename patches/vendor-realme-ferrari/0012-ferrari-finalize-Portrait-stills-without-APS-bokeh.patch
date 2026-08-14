@@ -1,7 +1,7 @@
 From bb0055510d64255153803dad9e9c8e8f55598748 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 12 Aug 2026 10:32:14 +0000
-Subject: [PATCH 12/12] ferrari: finalize Portrait stills without APS bokeh
+Subject: [PATCH 12/13] ferrari: finalize Portrait stills without APS bokeh
 
 Use the CameraUnit single-frame non-bokeh path so MediaStore JPEGs
 complete while APS ALGO_BOKEH remains unresolved on this HAL.

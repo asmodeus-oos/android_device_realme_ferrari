@@ -1,7 +1,7 @@
 From 9b7d4729f36c1dcd25c5bfc374b504cb786e4ef8 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Mon, 10 Aug 2026 10:11:36 +0000
-Subject: [PATCH 1/2] sm8450-common: fix proprietary blob dependencies
+Subject: [PATCH 1/4] sm8450-common: fix proprietary blob dependencies
 
 ---
  Android.bp | 5 +++--

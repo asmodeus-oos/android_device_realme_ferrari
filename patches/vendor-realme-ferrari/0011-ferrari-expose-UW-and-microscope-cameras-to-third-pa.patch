@@ -1,7 +1,7 @@
 From a93b1ba760eafa21003a5c50fb8bf058b01f6a98 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 12 Aug 2026 10:32:14 +0000
-Subject: [PATCH 11/12] ferrari: expose UW and microscope cameras to
+Subject: [PATCH 11/13] ferrari: expose UW and microscope cameras to
  third-party apps
 
 Clear SYSTEM_CAMERA on ids 0-3 so 3p apps can switch lenses; keep SAT
