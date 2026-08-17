@@ -1,0 +1,107 @@
+diff --git a/smali/com/oplus/ocs/camera/producer/mode/MicroscopeCaptureMode.smali b/smali/com/oplus/ocs/camera/producer/mode/MicroscopeCaptureMode.smali
+--- a/smali/com/oplus/ocs/camera/producer/mode/MicroscopeCaptureMode.smali
++++ b/smali/com/oplus/ocs/camera/producer/mode/MicroscopeCaptureMode.smali
+@@ -127,5 +127,103 @@
+     iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mMicroscopeCapturePreviewState:I
+ 
+     :cond_0
++    const-string p0, "before_take_picture"
++
++    invoke-virtual {p0, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_ferrari_done
++
++    if-eqz p4, :cond_ferrari_done
++
++    const/4 p0, 0x1
++
++    iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mRequestNum:I
++
++    const/4 p0, 0x0
++
++    iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mApsDecisionSceneMode:I
++
++    iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mMFSRFrameCount:I
++
++    iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mPreCollectFrameCount:I
++
++    iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mSwitchToMFNR:I
++
++    const/4 p0, 0x1
++
++    iput p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mApsDecisionFeatureType:I
++
++    sget-object p0, Landroid/hardware/camera2/CaptureRequest;->NOISE_REDUCTION_MODE:Landroid/hardware/camera2/CaptureRequest$Key;
++
++    const/4 p2, 0x0
++
++    invoke-static {p2}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object p3
++
++    invoke-virtual {p1, p0, p3}, Lcom/oplus/ocs/camera/metadata/parameter/PreviewParameter$Builder;->set(Landroid/hardware/camera2/CaptureRequest$Key;Ljava/lang/Object;)Lcom/oplus/ocs/camera/metadata/parameter/Parameter$BaseBuilder;
++
++    sget-object p0, Lcom/oplus/ocs/camera/metadata/UTakePictureKeys;->KEY_CUSTOM_NOISE_REDUCTION:Lcom/oplus/ocs/camera/metadata/RequestKey;
++
++    invoke-static {p2}, Ljava/lang/Byte;->valueOf(B)Ljava/lang/Byte;
++
++    move-result-object p3
++
++    invoke-virtual {p1, p0, p3}, Lcom/oplus/ocs/camera/metadata/parameter/PreviewParameter$Builder;->set(Lcom/oplus/ocs/camera/metadata/RequestKey;Ljava/lang/Object;)Lcom/oplus/ocs/camera/metadata/parameter/Parameter$BaseBuilder;
++
++    :cond_ferrari_done
++    return-void
++.end method
++
++.method public updateStageParameter(Lcom/oplus/ocs/camera/metadata/parameter/Parameter;Ljava/lang/String;Ljava/lang/String;Lcom/oplus/ocs/camera/common/util/CameraRequestTag;)V
++    .locals 4
++
++    invoke-super {p0, p1, p2, p3, p4}, Lcom/oplus/ocs/camera/producer/mode/PhotoMode;->updateStageParameter(Lcom/oplus/ocs/camera/metadata/parameter/Parameter;Ljava/lang/String;Ljava/lang/String;Lcom/oplus/ocs/camera/common/util/CameraRequestTag;)V
++
++    const-string v0, "before_take_picture"
++
++    invoke-virtual {v0, p2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :cond_ferrari_stage_done
++
++    if-eqz p1, :cond_ferrari_stage_done
++
++    sget-object v0, Lcom/oplus/ocs/camera/metadata/URequestKeys;->KEY_APS_FEATURE_TYPE:Lcom/oplus/ocs/camera/metadata/RequestKey;
++
++    const/4 v1, 0x1
++
++    new-array v2, v1, [I
++
++    const/4 v3, 0x0
++
++    aput v1, v2, v3
++
++    invoke-virtual {p1, v0, v2}, Lcom/oplus/ocs/camera/metadata/parameter/Parameter;->set(Lcom/oplus/ocs/camera/metadata/RequestKey;Ljava/lang/Object;)V
++
++    sget-object v0, Landroid/hardware/camera2/CaptureRequest;->NOISE_REDUCTION_MODE:Landroid/hardware/camera2/CaptureRequest$Key;
++
++    invoke-static {v3}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object v2
++
++    invoke-virtual {p1, v0, v2}, Lcom/oplus/ocs/camera/metadata/parameter/Parameter;->set(Landroid/hardware/camera2/CaptureRequest$Key;Ljava/lang/Object;)V
++
++    sget-object v0, Lcom/oplus/ocs/camera/metadata/UTakePictureKeys;->KEY_CUSTOM_NOISE_REDUCTION:Lcom/oplus/ocs/camera/metadata/RequestKey;
++
++    invoke-static {v3}, Ljava/lang/Byte;->valueOf(B)Ljava/lang/Byte;
++
++    move-result-object v2
++
++    invoke-virtual {p1, v0, v2}, Lcom/oplus/ocs/camera/metadata/parameter/Parameter;->set(Lcom/oplus/ocs/camera/metadata/RequestKey;Ljava/lang/Object;)V
++
++    if-eqz p4, :cond_ferrari_stage_done
++
++    iput v1, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mApsDecisionFeatureType:I
++
++    :cond_ferrari_stage_done
+     return-void
+ .end method

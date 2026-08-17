@@ -1,0 +1,125 @@
+From 83089eb20ff7ae4c6a88ab5cb608e24d01eda719 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 05:15:01 +0000
+Subject: [PATCH] msdl: use calibrated prebaked fallbacks on LRA devices
+
+---
+ .../data/repository/MSDLRepositoryImpl.kt     | 52 ++++---------------
+ 1 file changed, 9 insertions(+), 43 deletions(-)
+
+diff --git a/msdllib/src/com/google/android/msdl/data/repository/MSDLRepositoryImpl.kt b/msdllib/src/com/google/android/msdl/data/repository/MSDLRepositoryImpl.kt
+index 81979a2..b301701 100644
+--- a/msdllib/src/com/google/android/msdl/data/repository/MSDLRepositoryImpl.kt
++++ b/msdllib/src/com/google/android/msdl/data/repository/MSDLRepositoryImpl.kt
+@@ -33,15 +33,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+     override fun getHapticData(hapticToken: HapticToken): MSDLHapticData? = HAPTIC_DATA[hapticToken]
+ 
+     companion object {
+-        // Timings and amplitudes that recreate a composition of three SPIN primitives as a waveform
+-        private val SPIN_TIMINGS = longArrayOf(20, 20, 3, 43, 20, 20, 3)
+-        private val SPIN_AMPLITUDES = intArrayOf(40, 80, 40, 0, 40, 80, 40)
+         private const val SPIN_DELAY = 56L
+-        private const val SPIN_BREAK = 10
+-        private val SPIN_WAVEFORM_TIMINGS =
+-            SPIN_TIMINGS + SPIN_DELAY + SPIN_TIMINGS + SPIN_DELAY + SPIN_TIMINGS
+-        private val SPIN_WAVEFORM_AMPLITUDES =
+-            SPIN_AMPLITUDES + SPIN_BREAK + SPIN_AMPLITUDES + SPIN_BREAK + SPIN_AMPLITUDES
+ 
+         private val HAPTIC_DATA: Map<HapticToken, MSDLHapticData> =
+             mapOf(
+@@ -65,11 +57,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = SPIN_DELAY.toInt(),
+                                 ),
+                             ),
+-                            VibrationEffect.createWaveform(
+-                                SPIN_WAVEFORM_TIMINGS,
+-                                SPIN_WAVEFORM_AMPLITUDES,
+-                                -1,
+-                            ),
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK),
+                         )
+                     },
+                 HapticToken.NEGATIVE_CONFIRMATION_MEDIUM_EMPHASIS to
+@@ -92,11 +80,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = 114,
+                                 ),
+                             ),
+-                            VibrationEffect.createWaveform(
+-                                longArrayOf(10, 10, 10, 114, 10, 10, 10, 114, 10, 10, 10),
+-                                intArrayOf(10, 255, 20, 0, 10, 255, 20, 0, 10, 255, 20),
+-                                -1,
+-                            ),
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK),
+                         )
+                     },
+                 HapticToken.POSITIVE_CONFIRMATION_HIGH_EMPHASIS to
+@@ -114,11 +98,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = 114,
+                                 ),
+                             ),
+-                            VibrationEffect.createWaveform(
+-                                longArrayOf(10, 10, 10, 114, 10, 10, 10),
+-                                intArrayOf(10, 255, 20, 0, 10, 255, 20),
+-                                -1,
+-                            ),
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK),
+                         )
+                     },
+                 HapticToken.POSITIVE_CONFIRMATION_MEDIUM_EMPHASIS to
+@@ -136,11 +116,9 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = 52,
+                                 ),
+                             ),
+-                            VibrationEffect.createWaveform(
+-                                longArrayOf(10, 10, 10, 52, 10, 10, 10),
+-                                intArrayOf(10, 255, 20, 0, 10, 255, 20),
+-                                -1,
+-                            ),
++                            // Raw 255-amplitude fallback pulses bypass device calibration and
++                            // turn switch/toggle feedback into a long buzz on powerful LRAs.
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK),
+                         )
+                     },
+                 HapticToken.POSITIVE_CONFIRMATION_LOW_EMPHASIS to
+@@ -158,11 +136,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = 52,
+                                 ),
+                             ),
+-                            VibrationEffect.createWaveform(
+-                                longArrayOf(5, 52, 10, 10, 10),
+-                                intArrayOf(100, 0, 10, 255, 20),
+-                                -1,
+-                            ),
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK),
+                         )
+                     },
+                 HapticToken.NEUTRAL_CONFIRMATION_HIGH_EMPHASIS to
+@@ -175,11 +149,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = 0,
+                                 )
+                             ),
+-                            VibrationEffect.createWaveform(
+-                                longArrayOf(50, 100, 100, 50),
+-                                intArrayOf(5, 50, 20, 10),
+-                                -1,
+-                            ),
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK),
+                         )
+                     },
+                 HapticToken.NEUTRAL_CONFIRMATION_MEDIUM_EMPHASIS to
+@@ -270,11 +240,7 @@ internal class MSDLRepositoryImpl : MSDLRepository {
+                                     delayMillis = 0,
+                                 )
+                             },
+-                            VibrationEffect.createWaveform(
+-                                longArrayOf(10, 20, 20, 10),
+-                                intArrayOf(10, 30, 50, 10),
+-                                -1,
+-                            ),
++                            VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK),
+                         )
+                     },
+                 HapticToken.DRAG_INDICATOR_DISCRETE to
+-- 
+2.43.0
+

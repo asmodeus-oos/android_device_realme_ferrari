@@ -1,0 +1,23 @@
+From 5a83769c4030a2d2cc1e2e9c8ab8458c2d419e2d Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Tue, 11 Aug 2026 18:22:37 +0000
+Subject: [PATCH 08/13] ferrari: restore CameraUnit portrait logical camera
+
+---
+ proprietary/odm/etc/camera/config/camera_unit_config | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/proprietary/odm/etc/camera/config/camera_unit_config b/proprietary/odm/etc/camera/config/camera_unit_config
+index 8569ec1..8cb8a16 100644
+--- a/proprietary/odm/etc/camera/config/camera_unit_config
++++ b/proprietary/odm/etc/camera/config/camera_unit_config
+@@ -1,5 +1,5 @@
+ {
+-  "camera_id_list":["0", "1", "2", "3"],
++  "camera_id_list":["0", "1", "2", "3", "4"],
+   "main_info":{
+     "version_code":"1.0.2",
+     "version_date":"20200831200000"
+-- 
+2.43.0
+

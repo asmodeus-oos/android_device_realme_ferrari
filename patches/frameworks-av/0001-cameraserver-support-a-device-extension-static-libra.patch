@@ -1,0 +1,28 @@
+From 8bfca1c5c65227dc8c8a9eeb82c9a48d3f9c4c37 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH 1/2] cameraserver: support a device extension static library
+
+---
+ camera/cameraserver/Android.bp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/camera/cameraserver/Android.bp b/camera/cameraserver/Android.bp
+index d6b7b159a1..dd187e74b1 100644
+--- a/camera/cameraserver/Android.bp
++++ b/camera/cameraserver/Android.bp
+@@ -66,6 +66,11 @@ cc_binary {
+         "libcameraservice",
+     ],
+ 
++    whole_static_libs: select(soong_config_variable("libcameraservice", "ext_lib"), {
++        any @ flag_val: [flag_val],
++        default: [],
++    }),
++
+     compile_multilib: "first",
+ 
+     cflags: [
+-- 
+2.43.0
+

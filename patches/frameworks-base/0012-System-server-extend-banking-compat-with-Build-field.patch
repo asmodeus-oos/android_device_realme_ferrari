@@ -1,0 +1,164 @@
+From 64bbc7a037cf63ff3539be8240e83e024a2263c7 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 07:27:33 +0000
+Subject: [PATCH 12/15] System server: extend banking compat with Build field
+ spoof
+
+Paytm and similar apps also read zygote-baked Build.IS_DEBUGGABLE /
+TAGS after the Settings and USB sticky spoofs. Apply matching Build
+rewrites in-process when the banking_compatibility preset is enabled.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ core/java/android/app/ActivityThread.java     |   4 +
+ .../app/BankingCompatibilitySpoof.java        | 103 ++++++++++++++++++
+ .../wm/sandbox/SettingsSpoofController.java   |   8 ++
+ 3 files changed, 115 insertions(+)
+ create mode 100644 core/java/android/app/BankingCompatibilitySpoof.java
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 0164381827cb..be39d136c840 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -8196,6 +8196,10 @@ public final class ActivityThread extends ClientTransactionHandler
+ 
+         GamePropsSpoofService.getInstance().spoofForPackage(data.appInfo.packageName);
+ 
++        // Banking preset: rewrite zygote-baked Build debug/signing fields before
++        // application code (e.g. Paytm) inspects them.
++        BankingCompatibilitySpoof.applyForPackage(data.appInfo.packageName);
++
+         PlayIntegritySpoofService pifService = PlayIntegritySpoofService.getInstance();
+         if (pifService.shouldSpoof(data.processName)) {
+             pifService.spoofBuildFields(data.processName);
+diff --git a/core/java/android/app/BankingCompatibilitySpoof.java b/core/java/android/app/BankingCompatibilitySpoof.java
+new file mode 100644
+index 000000000000..7968fe9c953c
+--- /dev/null
++++ b/core/java/android/app/BankingCompatibilitySpoof.java
+@@ -0,0 +1,103 @@
++/*
++ * Copyright (C) 2026 Evolution X
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package android.app;
++
++import android.os.Build;
++import android.os.Process;
++import android.os.RemoteException;
++import android.util.Slog;
++
++import java.lang.reflect.Field;
++
++/**
++ * Client-side companion to the sandbox {@code banking_compatibility} preset.
++ *
++ * <p>System-server already spoofs developer Settings and sanitizes USB sticky
++ * broadcasts for targeted packages. Zygote still bakes real {@link Build}
++ * constants (notably {@link Build#IS_DEBUGGABLE}) into every forked app, and
++ * some payment apps also read those fields / related properties directly. When
++ * the preset is enabled for a package, rewrite the obvious debug/signing
++ * signals before application code runs.
++ *
++ * @hide
++ */
++public final class BankingCompatibilitySpoof {
++    private static final String TAG = "BankingCompatSpoof";
++
++    /** @hide */
++    public static final String PRESET = "banking_compatibility";
++
++    private static volatile boolean sEnabled;
++
++    private BankingCompatibilitySpoof() {}
++
++    /** @hide */
++    public static boolean isEnabled() {
++        return sEnabled;
++    }
++
++    /**
++     * Apply Build / property spoofs when {@code packageName} has the banking
++     * compatibility preset enabled.
++     *
++     * @hide
++     */
++    public static void applyForPackage(String packageName) {
++        if (packageName == null || Process.isIsolated()) {
++            return;
++        }
++
++        try {
++            final IActivityManager am = ActivityManager.getService();
++            if (am == null || !am.isSandboxSpoofSettingEnabled(packageName, PRESET)) {
++                return;
++            }
++        } catch (RemoteException e) {
++            Slog.w(TAG, "Unable to query banking compatibility for " + packageName, e);
++            return;
++        }
++
++        sEnabled = true;
++        spoofBuildFields();
++        Slog.i(TAG, "Applied banking Build spoof for " + packageName);
++    }
++
++    private static void spoofBuildFields() {
++        setBuildField("TAGS", "release-keys");
++        setBuildField("TYPE", "user");
++        setBuildField("IS_DEBUGGABLE", Boolean.FALSE);
++
++        // Keep fingerprint consistent with a user/release image when zygote
++        // baked a userdebug/test-keys variant from partition props.
++        final String fingerprint = Build.FINGERPRINT;
++        if (fingerprint != null
++                && (fingerprint.contains("test-keys") || fingerprint.contains("userdebug"))) {
++            setBuildField("FINGERPRINT",
++                    fingerprint.replace("userdebug", "user").replace("test-keys", "release-keys"));
++        }
++    }
++
++    private static void setBuildField(String name, Object value) {
++        try {
++            final Field field = Build.class.getDeclaredField(name);
++            field.setAccessible(true);
++            field.set(null, value);
++        } catch (ReflectiveOperationException e) {
++            Slog.w(TAG, "Failed to spoof Build." + name, e);
++        }
++    }
++}
+diff --git a/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java b/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java
+index cc20d68621c7..943f3405edcf 100644
+--- a/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java
++++ b/services/core/java/com/android/server/wm/sandbox/SettingsSpoofController.java
+@@ -20,6 +20,14 @@ import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Set;
+ 
++/**
++ * Settings keys that can be spoofed for sandboxed packages.
++ *
++ * <p>The {@link #BANKING_COMPATIBILITY} preset enables the ADB/dev-option keys
++ * below plus USB sticky sanitization in {@code BroadcastController}. Targeted
++ * app processes also run {@code android.app.BankingCompatibilitySpoof} to rewrite
++ * zygote-baked {@code Build} debug/signing fields.
++ */
+ public class SettingsSpoofController {
+ 
+     public static final String BANKING_COMPATIBILITY = "banking_compatibility";
+-- 
+2.43.0
+

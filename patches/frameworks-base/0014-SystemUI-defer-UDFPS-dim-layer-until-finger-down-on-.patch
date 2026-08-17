@@ -1,0 +1,182 @@
+From 77b786aaadd249bf85d3367b6c99e674dffa483b Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Fri, 14 Aug 2026 16:31:33 +0000
+Subject: [PATCH 14/15] SystemUI: defer UDFPS dim layer until finger-down on
+ keyguard
+
+Keep dim+HBM only for the press so idle lock screen does not assert
+Oplus fingerprint_mask / OFP. Make overlay cleanup idempotent.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ .../systemui/biometrics/UdfpsHelper.kt        | 90 ++++++++++++++-----
+ 1 file changed, 67 insertions(+), 23 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
+index 4e256c329037..a1a2f03be7bf 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
+@@ -50,7 +50,7 @@ private const val DOZE_DIM_ALPHA = 0.98f
+ class UdfpsHelper(
+     private val context: Context,
+     private val windowManager: WindowManager,
+-    private val shadeInteractor: ShadeInteractor,
++    @Suppress("UNUSED_PARAMETER") private val shadeInteractor: ShadeInteractor,
+     @RequestReason val requestReason: Int,
+     private val brightnessMirrorShowingInteractor: BrightnessMirrorShowingInteractor,
+     private var view: View = View(context).apply {
+@@ -98,6 +98,9 @@ class UdfpsHelper(
+         addUpdateListener { animator ->
+             view.alpha = animator.animatedValue as Float
+             dimLayoutParams.alpha = animator.animatedValue as Float
++            if (!view.isAttachedToWindow) {
++                return@addUpdateListener
++            }
+             try {
+                 windowManager.updateViewLayout(view, dimLayoutParams)
+             } catch (e: IllegalArgumentException) {
+@@ -112,13 +115,22 @@ class UdfpsHelper(
+         override fun onDisplayChanged(displayId: Int) {
+             if (displayId == Display.DEFAULT_DISPLAY && view.isAttachedToWindow) {
+                 brightnessToAlpha()
+-                windowManager.updateViewLayout(view, dimLayoutParams)
++                if (view.isAttachedToWindow) {
++                    try {
++                        windowManager.updateViewLayout(view, dimLayoutParams)
++                    } catch (e: IllegalArgumentException) {
++                        Log.w(TAG, "UDFPS dim layer is no longer attached", e)
++                    }
++                }
+             }
+         }
+ 
+         override fun onDisplayRemoved(displayId: Int) {}
+     }
+ 
++    private var isDimLayerManaged: Boolean = false
++    private var isBrightnessMirrorShowing: Boolean = false
++
+     private fun interpolate(
+         value: Float,
+         fromMin: Int,
+@@ -181,29 +193,59 @@ class UdfpsHelper(
+         dimLayoutParams.alpha = targetAlpha
+     }
+ 
+-    fun addDimLayer() {
++    private fun ensureDimLayerAttached() {
++        if (view.isAttachedToWindow) {
++            return
++        }
+         brightnessToAlpha()
+         windowManager.addView(view, dimLayoutParams)
++    }
++
++    private fun detachDimLayer() {
++        alphaAnimator.cancel()
++        if (view.isAttachedToWindow) {
++            try {
++                windowManager.removeView(view)
++            } catch (e: IllegalArgumentException) {
++                Log.w(TAG, "UDFPS dim layer was already removed", e)
++            }
++        }
++        view.isVisible = false
++    }
++
++    fun addDimLayer() {
++        if (isDimLayerManaged) {
++            return
++        }
++        isDimLayerManaged = true
++        brightnessToAlpha()
+         displayManager.registerDisplayListener(
+             displayListener,
+             null,
+             DisplayManager.EVENT_TYPE_DISPLAY_BRIGHTNESS,
+         )
++        // Keyguard: defer composing "Dim Layer for UDFPS" until finger-down so HWC does not
++        // assert fingerprint_mask / OFP while the lock screen is idle (keeps Night Light).
++        // Biometric prompt / enroll: attach immediately as before.
++        if (!isKeyguard) {
++            ensureDimLayerAttached()
++            view.isVisible = true
++        }
+     }
+ 
+     fun removeDimLayer() {
+-        windowManager.removeView(view)
+-        displayManager.unregisterDisplayListener(displayListener)
++        detachDimLayer()
++        if (isDimLayerManaged) {
++            displayManager.unregisterDisplayListener(displayListener)
++        }
++        isDimLayerManaged = false
++        isFingerDown = false
+     }
+ 
+     init {
+         view.repeatWhenAttached {
+             repeatOnLifecycle(Lifecycle.State.CREATED) {
+                 listenForBrightnessMirror(this)
+-
+-                if (isKeyguard) {
+-                    listenForShadeTouchability(this)
+-                }
+             }
+         }
+ 
+@@ -215,13 +257,16 @@ class UdfpsHelper(
+     private suspend fun listenForBrightnessMirror(scope: CoroutineScope): Job {
+         return scope.launch {
+             brightnessMirrorShowingInteractor.isShowing.collect {
+-                view.isVisible = !it
++                isBrightnessMirrorShowing = it
++                if (isKeyguard) {
++                    updateDimLayerVisibility()
++                } else {
++                    view.isVisible = !it
++                }
+             }
+         }
+     }
+ 
+-    private var isShadeTouchable: Boolean = false
+-
+     private var isFingerDown: Boolean = false
+ 
+     fun setFingerDown(fingerDown: Boolean) {
+@@ -233,20 +278,19 @@ class UdfpsHelper(
+     }
+ 
+     private fun updateDimLayerVisibility() {
+-        view.isVisible = isShadeTouchable || isFingerDown
+-        if (view.isVisible) {
++        // On keyguard, only compose the dim layer while the finger is down. Showing it earlier
++        // (e.g. whenever the shade is touchable) asserts Oplus fingerprint_mask and engages the
++        // global HBM/OFP color path for the whole panel.
++        val shouldShow = isFingerDown && !isBrightnessMirrorShowing
++        if (shouldShow) {
++            ensureDimLayerAttached()
++            view.isVisible = true
+             brightnessToAlpha()
+             alphaAnimator.cancel()
+             alphaAnimator.start()
+-        }
+-    }
+-
+-    private suspend fun listenForShadeTouchability(scope: CoroutineScope): Job {
+-        return scope.launch {
+-            shadeInteractor.isShadeTouchable.collect {
+-                isShadeTouchable = it
+-                updateDimLayerVisibility()
+-            }
++        } else {
++            // Detach so SurfaceFlinger/HWC drop the dim layer name and clear fingerprint_mask.
++            detachDimLayer()
+         }
+     }
+ }
+-- 
+2.43.0
+

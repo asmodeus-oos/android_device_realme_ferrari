@@ -1,0 +1,350 @@
+From 37724d835594edb18498458c9fa45077511ff4df Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Fri, 14 Aug 2026 16:32:03 +0000
+Subject: [PATCH 4/4] Revert "Settings: support per-app volume [3/3]"
+
+Drop the Settings-side App Volume panel/slice leftover after the
+frameworks per-app volume reverts.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ AndroidManifest.xml                           |   4 -
+ res/values/evolution_strings.xml              |   5 -
+ res/xml/sound_settings.xml                    |   7 -
+ .../settings/media/AppVolumeSlice.java        | 150 ------------------
+ .../settings/panel/AppVolumePanel.java        |  65 --------
+ .../panel/PanelFeatureProviderImpl.java       |   2 -
+ .../settings/slices/CustomSliceRegistry.java  |  12 --
+ 7 files changed, 245 deletions(-)
+ delete mode 100644 src/com/android/settings/media/AppVolumeSlice.java
+ delete mode 100644 src/com/android/settings/panel/AppVolumePanel.java
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index b889263599e..bc42977be44 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -5577,10 +5577,6 @@
+                     <action android:name="android.settings.panel.action.VOLUME" />
+                     <category android:name="android.intent.category.DEFAULT" />
+                 </intent-filter>
+-                <intent-filter>
+-                    <action android:name="android.settings.panel.action.APP_VOLUME" />
+-                    <category android:name="android.intent.category.DEFAULT" />
+-                </intent-filter>
+         </activity>
+ 
+         <activity android:name=".wifi.addappnetworks.AddAppNetworksActivity"
+diff --git a/res/values/evolution_strings.xml b/res/values/evolution_strings.xml
+index 2094ef8ae9a..0d903ffd51f 100644
+--- a/res/values/evolution_strings.xml
++++ b/res/values/evolution_strings.xml
+@@ -179,11 +179,6 @@
+     <string name="advanced_vpn_preference_group_title">Built-in</string>
+     <string name="vpn_preference_group_title">Others</string>
+ 
+-    <!-- Per-app volume -->
+-    <string name="app_volume">App volume</string>
+-    <string name="app_volume_title">Per-app volume control</string>
+-    <string name="app_volume_summary">Show per-app volume button into volume dialog</string>
+-
+     <!-- Force LTE_CA -->
+     <string name="force_lte_ca_title">Carrier aggregation</string>
+     <string name="force_lte_ca_summary">Enhances LTE bandwidth by aggregating supported bands</string>
+diff --git a/res/xml/sound_settings.xml b/res/xml/sound_settings.xml
+index 8e0834b5670..8507f809911 100644
+--- a/res/xml/sound_settings.xml
++++ b/res/xml/sound_settings.xml
+@@ -188,13 +188,6 @@
+             android:defaultValue="false"
+             android:order="-111"/>
+ 
+-        <org.evolution.settings.preferences.SystemSettingSwitchPreference
+-            android:key="show_app_volume"
+-            android:title="@string/app_volume_title"
+-            android:summary="@string/app_volume_summary"
+-            android:defaultValue="false"
+-            android:order="-112"/>
+-
+         <!-- Spatial audio -->
+         <Preference
+             android:key="spatial_audio_summary"
+diff --git a/src/com/android/settings/media/AppVolumeSlice.java b/src/com/android/settings/media/AppVolumeSlice.java
+deleted file mode 100644
+index b6d0c5d4f4d..00000000000
+--- a/src/com/android/settings/media/AppVolumeSlice.java
++++ /dev/null
+@@ -1,150 +0,0 @@
+-/*
+- * Copyright (C) 2022 Project Kaleidoscope
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.settings.media;
+-
+-import static android.app.slice.Slice.EXTRA_RANGE_VALUE;
+-import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
+-
+-import static com.android.settings.slices.CustomSliceRegistry.APP_VOLUME_SLICE_URI;
+-
+-import android.app.PendingIntent;
+-import android.content.Context;
+-import android.content.Intent;
+-import android.content.pm.ApplicationInfo;
+-import android.content.pm.PackageManager;
+-import android.content.res.Resources;
+-import android.graphics.Bitmap;
+-import android.media.AudioManager;
+-import android.media.AppVolume;
+-import android.net.Uri;
+-import android.text.TextUtils;
+-import android.util.Log;
+-
+-import androidx.core.graphics.drawable.IconCompat;
+-import androidx.slice.Slice;
+-import androidx.slice.builders.ListBuilder;
+-import androidx.slice.builders.ListBuilder.InputRangeBuilder;
+-import androidx.slice.builders.SliceAction;
+-
+-import com.android.settings.R;
+-import com.android.settings.Utils;
+-import com.android.settings.slices.CustomSliceable;
+-import com.android.settings.slices.SliceBroadcastReceiver;
+-
+-import java.util.ArrayList;
+-import java.util.List;
+-
+-public class AppVolumeSlice implements CustomSliceable {
+-
+-    private static final String TAG = "AppVolumeSlice";
+-    private static final String PACKAGE_NAME = "package_name";
+-    private static final String ACTION_LAUNCH_DIALOG = "action_launch_dialog";
+-
+-    private final Context mContext;
+-
+-    private final AudioManager mAudioManager;
+-
+-    public AppVolumeSlice(Context context) {
+-        mContext = context;
+-        mAudioManager = context.getSystemService(AudioManager.class);
+-    }
+-
+-    @Override
+-    public void onNotifyChange(Intent intent) {
+-        final int newPosition = intent.getIntExtra(EXTRA_RANGE_VALUE, -1);
+-        final String packageName = intent.getStringExtra(PACKAGE_NAME);
+-        if (!TextUtils.isEmpty(packageName)) {
+-            mAudioManager.setAppVolume(packageName, newPosition / 100.0f);
+-            return;
+-        }
+-    }
+-
+-    @Override
+-    public Slice getSlice() {
+-        final ListBuilder listBuilder = new ListBuilder(mContext, getUri(), ListBuilder.INFINITY)
+-                .setAccentColor(COLOR_NOT_TINTED);
+-
+-        // Only displaying active tracks
+-        final List<AppVolume> appVols = new ArrayList<>();
+-        for (AppVolume vol : mAudioManager.listAppVolumes()) {
+-            if (vol.isActive()) {
+-                appVols.add(vol);
+-            }
+-        }
+-        if (appVols.isEmpty()) {
+-            Log.d(TAG, "No active tracks");
+-            return listBuilder.build();
+-        }
+-
+-        for (AppVolume vol : appVols) {
+-            final CharSequence appName = Utils.getApplicationLabel(
+-                    mContext, vol.getPackageName());
+-            IconCompat icon = getApplicationIcon(vol.getPackageName());
+-            final SliceAction primarySliceAction = SliceAction.create(
+-                    getBroadcastIntent(mContext), icon, ListBuilder.ICON_IMAGE, appName);
+-            listBuilder.addInputRange(new InputRangeBuilder()
+-                    .setTitleItem(icon, ListBuilder.ICON_IMAGE)
+-                    .setTitle(appName)
+-                    .setInputAction(getSliderInputAction(vol.getPackageName()))
+-                    .setMax(100)
+-                    .setValue((int)(vol.getVolume() * 100))
+-                    .setPrimaryAction(primarySliceAction));
+-               }
+-        return listBuilder.build();
+-    }
+-
+-    private IconCompat getApplicationIcon(String packageName) {
+-        PackageManager pm = mContext.getPackageManager();
+-        try {
+-            ApplicationInfo ai = pm.getApplicationInfo(packageName, PackageManager.MATCH_ANY_USER);
+-            Resources resources = pm.getResourcesForApplication(ai);
+-            IconCompat icon = IconCompat.createWithResource(resources, packageName, ai.icon);
+-            return icon;
+-        } catch (PackageManager.NameNotFoundException e) {
+-            Log.e(TAG, "Failed to get icon of " + packageName, e);
+-        }
+-
+-        final Bitmap bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+-        return IconCompat.createWithBitmap(bitmap);
+-    }
+-
+-
+-    private PendingIntent getSliderInputAction(String packageName) {
+-        final int requestCode = packageName.hashCode();
+-        final Intent intent = new Intent(getUri().toString())
+-                .setData(getUri())
+-                .putExtra(PACKAGE_NAME, packageName)
+-                .setClass(mContext, SliceBroadcastReceiver.class);
+-        return PendingIntent.getBroadcast(mContext, requestCode, intent,
+-                PendingIntent.FLAG_MUTABLE);
+-    }
+-
+-    @Override
+-    public Uri getUri() {
+-        return APP_VOLUME_SLICE_URI;
+-    }
+-
+-    @Override
+-    public Intent getIntent() {
+-        return null;
+-    }
+-
+-    @Override
+-    public int getSliceHighlightMenuRes() {
+-        return R.string.menu_key_sound;
+-    }
+-}
+diff --git a/src/com/android/settings/panel/AppVolumePanel.java b/src/com/android/settings/panel/AppVolumePanel.java
+deleted file mode 100644
+index 876a15cf576..00000000000
+--- a/src/com/android/settings/panel/AppVolumePanel.java
++++ /dev/null
+@@ -1,65 +0,0 @@
+-/*
+- * Copyright (C) 2022 Project Kaleidoscope
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.settings.panel;
+-
+-import android.app.settings.SettingsEnums;
+-import android.content.Context;
+-import android.content.Intent;
+-import android.net.Uri;
+-import android.provider.Settings;
+-
+-import com.android.settings.R;
+-import com.android.settings.slices.CustomSliceRegistry;
+-
+-import java.util.ArrayList;
+-import java.util.List;
+-
+-public class AppVolumePanel implements PanelContent {
+-
+-    private final Context mContext;
+-
+-    public static AppVolumePanel create(Context context) {
+-        return new AppVolumePanel(context);
+-    }
+-
+-    private AppVolumePanel(Context context) {
+-        mContext = context.getApplicationContext();
+-    }
+-
+-    @Override
+-    public CharSequence getTitle() {
+-        return mContext.getText(R.string.app_volume);
+-    }
+-
+-    @Override
+-    public List<Uri> getSlices() {
+-        final List<Uri> uris = new ArrayList<>();
+-        uris.add(CustomSliceRegistry.APP_VOLUME_SLICE_URI);
+-        return uris;
+-    }
+-
+-    @Override
+-    public int getMetricsCategory() {
+-        return SettingsEnums.PANEL_VOLUME;
+-    }
+-
+-    @Override
+-    public Intent getSeeMoreIntent() {
+-        return new Intent(Settings.ACTION_SOUND_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+-    }
+-
+-}
+diff --git a/src/com/android/settings/panel/PanelFeatureProviderImpl.java b/src/com/android/settings/panel/PanelFeatureProviderImpl.java
+index 4d7acea49f3..a0aeec60856 100644
+--- a/src/com/android/settings/panel/PanelFeatureProviderImpl.java
++++ b/src/com/android/settings/panel/PanelFeatureProviderImpl.java
+@@ -87,8 +87,6 @@ public class PanelFeatureProviderImpl implements PanelFeatureProvider {
+                         return VolumePanel.create(context);
+                     }
+                 }
+-            case Settings.Panel.ACTION_APP_VOLUME:
+-                return AppVolumePanel.create(context);
+         }
+ 
+         throw new IllegalStateException("No matching panel for: " + panelType);
+diff --git a/src/com/android/settings/slices/CustomSliceRegistry.java b/src/com/android/settings/slices/CustomSliceRegistry.java
+index 87d9fb393da..c781d535cab 100644
+--- a/src/com/android/settings/slices/CustomSliceRegistry.java
++++ b/src/com/android/settings/slices/CustomSliceRegistry.java
+@@ -33,7 +33,6 @@ import com.android.settings.homepage.contextualcards.slices.DarkThemeSlice;
+ import com.android.settings.homepage.contextualcards.slices.FaceSetupSlice;
+ import com.android.settings.homepage.contextualcards.slices.LowStorageSlice;
+ import com.android.settings.location.LocationSlice;
+-import com.android.settings.media.AppVolumeSlice;
+ import com.android.settings.media.MediaOutputIndicatorSlice;
+ import com.android.settings.media.RemoteMediaSlice;
+ import com.android.settings.network.ProviderModelSlice;
+@@ -292,16 +291,6 @@ public class CustomSliceRegistry {
+             .appendPath("always_on_display")
+             .build();
+ 
+-    /**
+-     * Backing Uri for the App Volume Slice.
+-     */
+-    public static Uri APP_VOLUME_SLICE_URI = new Uri.Builder()
+-            .scheme(ContentResolver.SCHEME_CONTENT)
+-            .authority(SettingsSliceProvider.SLICE_AUTHORITY)
+-            .appendPath(SettingsSlicesContract.PATH_SETTING_ACTION)
+-            .appendPath("app_volume")
+-            .build();
+-
+     @VisibleForTesting
+     static final Map<Uri, Class<? extends CustomSliceable>> sUriToSlice;
+ 
+@@ -316,7 +305,6 @@ public class CustomSliceRegistry {
+         sUriToSlice.put(ALWAYS_ON_SLICE_URI, AlwaysOnDisplaySlice.class);
+         sUriToSlice.put(MEDIA_OUTPUT_INDICATOR_SLICE_URI, MediaOutputIndicatorSlice.class);
+         sUriToSlice.put(REMOTE_MEDIA_SLICE_URI, RemoteMediaSlice.class);
+-        sUriToSlice.put(APP_VOLUME_SLICE_URI, AppVolumeSlice.class);
+ 
+         // Slices for contextual card.
+         sUriToSlice.put(FACE_ENROLL_SLICE_URI, FaceSetupSlice.class);
+-- 
+2.43.0
+

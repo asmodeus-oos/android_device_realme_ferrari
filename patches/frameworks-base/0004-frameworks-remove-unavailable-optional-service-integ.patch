@@ -1,0 +1,509 @@
+From b6f7f6a232c72c5eb7a6c4c9966426d8ed52889c Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 17:10:24 +0000
+Subject: [PATCH 04/15] frameworks: remove unavailable optional service
+ integrations
+
+---
+ Android.bp                                    |  1 -
+ .../display/DisplayManagerInternal.java       | 15 -----
+ core/res/AndroidManifest.xml                  |  4 --
+ services/Android.bp                           |  2 -
+ services/core/Android.bp                      |  7 ++-
+ .../server/biometrics/AuthService.java        |  4 +-
+ .../server/biometrics/BiometricService.java   |  3 +-
+ .../biometrics/sensors/face/FaceService.java  | 26 +-------
+ .../server/display/DisplayManagerService.java | 28 ---------
+ .../com/android/server/wm/DisplayContent.java |  8 +--
+ services/freeform/Android.bp                  | 27 ---------
+ services/freeform/jarjar-rules.txt            |  2 -
+ .../server/display/FreeformService.java       | 59 -------------------
+ .../java/com/android/server/SystemServer.java |  5 --
+ 14 files changed, 10 insertions(+), 181 deletions(-)
+ delete mode 100644 services/freeform/Android.bp
+ delete mode 100644 services/freeform/jarjar-rules.txt
+ delete mode 100644 services/freeform/java/com/android/server/display/FreeformService.java
+
+diff --git a/Android.bp b/Android.bp
+index 3d03e90009f3..2cfb70c0ef99 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -144,7 +144,6 @@ filegroup {
+         ":deviceproductinfoconstants_aidl",
+ 
+         ":adbrootservice_aidl",
+-        ":lmofreeform_aidl",
+ 
+         // For the generated R.java and Manifest.java
+         ":framework-res{.aapt.srcjar}",
+diff --git a/core/java/android/hardware/display/DisplayManagerInternal.java b/core/java/android/hardware/display/DisplayManagerInternal.java
+index 0b47a7bc825b..8ae295dd7227 100644
+--- a/core/java/android/hardware/display/DisplayManagerInternal.java
++++ b/core/java/android/hardware/display/DisplayManagerInternal.java
+@@ -24,22 +24,18 @@ import android.graphics.Point;
+ import android.hardware.SensorManager;
+ import android.hardware.input.HostUsiVersion;
+ import android.os.Handler;
+-import android.os.IBinder;
+ import android.os.PowerManager;
+ import android.util.IntArray;
+ import android.util.SparseArray;
+ import android.util.SparseIntArray;
+ import android.view.Display;
+ import android.view.DisplayInfo;
+-import android.view.Surface;
+ import android.view.SurfaceControl;
+ import android.view.SurfaceControl.RefreshRateRange;
+ import android.view.SurfaceControl.Transaction;
+ import android.window.DisplayWindowPolicyController;
+ import android.window.ScreenCaptureInternal;
+ 
+-import com.libremobileos.freeform.ILMOFreeformDisplayCallback;
+-
+ import java.lang.annotation.Retention;
+ import java.lang.annotation.RetentionPolicy;
+ import java.util.List;
+@@ -527,17 +523,6 @@ public abstract class DisplayManagerInternal {
+      */
+     public abstract int[] getDisplayIds(boolean includeDisabled);
+ 
+-    // LMOFreeform
+-    public abstract void createFreeformLocked(String name, ILMOFreeformDisplayCallback callback,
+-            int width, int height, int densityDpi, boolean secure, boolean ownContentOnly,
+-            boolean shouldShowSystemDecorations, Surface surface, float refreshRate,
+-            long presentationDeadlineNanos);
+-
+-    public abstract void resizeFreeform(IBinder appToken, int width, int height,
+-            int densityDpi);
+-
+-    public abstract void releaseFreeform(IBinder appToken);
+-
+     /**
+      * Get group id for given display id
+      */
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index ba36e999d56f..33bb2d388fc1 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -992,10 +992,6 @@
+         android:knownCerts="@array/config_setContactsDefaultAccountKnownSigners"
+         android:featureFlag="android.provider.new_default_account_api_enabled"/>
+ 
+-    <!-- @hide -->
+-    <permission android:name="com.libremobileos.permission.START_FREEFORM"
+-                android:protectionLevel="signature|privileged" />
+-
+     <!-- ====================================================================== -->
+     <!-- Permissions for accessing user's calendar                              -->
+     <!-- ====================================================================== -->
+diff --git a/services/Android.bp b/services/Android.bp
+index c5d9704e0b57..a34e4906f94b 100644
+--- a/services/Android.bp
++++ b/services/Android.bp
+@@ -137,7 +137,6 @@ filegroup {
+         ":services.credentials-sources",
+         ":services.devicepolicy-sources",
+         ":services.files-sources",
+-        ":services.freeform-sources",
+         ":services.lskfreset-sources",
+         ":services.midi-sources",
+         ":services.musicsearch-sources",
+@@ -339,7 +338,6 @@ java_library {
+         "services.devicepolicy",
+         "services.flags",
+         "services.files",
+-        "services.freeform",
+         "services.lskfreset",
+         "services.midi",
+         "services.musicsearch",
+diff --git a/services/core/Android.bp b/services/core/Android.bp
+index 0999d8cd101f..113de77e84e4 100644
+--- a/services/core/Android.bp
++++ b/services/core/Android.bp
+@@ -22,6 +22,11 @@ filegroup {
+     srcs: ["java/**/*.java"],
+     exclude_srcs: [
+         ":services.core-sources-am-wm",
++        // FaceSense is an optional AOSPA extension.  Ferrari has no face
++        // sensor and this checkout does not include its vendor AIDL module.
++        // Keep the extension sources out of the platform service library so
++        // the normal face HAL path remains buildable without that module.
++        "java/com/android/server/biometrics/sensors/face/sense/**/*.java",
+     ],
+     path: "java",
+     visibility: [
+@@ -154,7 +159,6 @@ java_library_static {
+         ":device-state-config",
+         ":memory-limiter-config",
+         ":services-sources-telecom",
+-        ":lmofreeform-display-adapter-java",
+         "java/com/android/server/EventLogTags.logtags",
+         "java/com/android/server/am/EventLogTags.logtags",
+         "java/com/android/server/wm/EventLogTags.logtags",
+@@ -275,7 +279,6 @@ java_library_static {
+         "android.content.flags-aconfig-java",
+         "trust_token",
+         "ambientcontext_flags_lib",
+-        "vendor.aospa.biometrics.face",
+     ],
+     javac_shard_size: 50,
+     javacflags: [
+diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
+index 393b67e84620..5314437f50d8 100644
+--- a/services/core/java/com/android/server/biometrics/AuthService.java
++++ b/services/core/java/com/android/server/biometrics/AuthService.java
+@@ -78,7 +78,6 @@ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.util.ArrayUtils;
+ import com.android.server.SystemService;
+ import com.android.server.biometrics.sensors.face.FaceService;
+-import com.android.server.biometrics.sensors.face.sense.SenseUtils;
+ import com.android.server.biometrics.sensors.fingerprint.FingerprintService;
+ import com.android.server.companion.virtual.VirtualDeviceManagerInternal;
+ 
+@@ -1024,8 +1023,7 @@ public class AuthService extends SystemService {
+             final String[] hidlConfigStrings, final Context context,
+             final IFaceService faceService, final BiometricHandlerProvider handlerProvider) {
+         if ((hidlConfigStrings == null || hidlConfigStrings.length == 0)
+-                && (faceAidlInstances == null || faceAidlInstances.length == 0)
+-                && !SenseUtils.canUseProvider()) {
++                && (faceAidlInstances == null || faceAidlInstances.length == 0)) {
+             Slog.d(TAG, "No face sensors.");
+             return;
+         }
+diff --git a/services/core/java/com/android/server/biometrics/BiometricService.java b/services/core/java/com/android/server/biometrics/BiometricService.java
+index 43891f57ffab..f6c766abeb6c 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricService.java
++++ b/services/core/java/com/android/server/biometrics/BiometricService.java
+@@ -114,7 +114,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
+ import java.util.concurrent.atomic.AtomicLong;
+ import java.util.function.Supplier;
+ 
+-import com.android.server.biometrics.sensors.face.sense.SenseUtils;
+ 
+ /**
+  * System service that arbitrates the modality for BiometricPrompt to use.
+@@ -349,7 +348,7 @@ public class BiometricService extends SystemService {
+             // Use the legacy setting on face-only devices that shipped on or before Q
+             mUseLegacyFaceOnlySettings =
+                     (Build.VERSION.DEVICE_INITIAL_SDK_INT <= Build.VERSION_CODES.Q
+-                    && hasFace && !mUseFingerprint) || SenseUtils.canUseProvider();
++                    && hasFace && !mUseFingerprint);
+ 
+ 
+             mCanUseBiometrics = mUseLegacyFaceOnlySettings || mUseFingerprint;
+diff --git a/services/core/java/com/android/server/biometrics/sensors/face/FaceService.java b/services/core/java/com/android/server/biometrics/sensors/face/FaceService.java
+index b3e576994a7c..a34791f70533 100644
+--- a/services/core/java/com/android/server/biometrics/sensors/face/FaceService.java
++++ b/services/core/java/com/android/server/biometrics/sensors/face/FaceService.java
+@@ -26,7 +26,6 @@ import android.app.ActivityManager;
+ import android.content.Context;
+ import android.hardware.biometrics.AuthenticationStateListener;
+ import android.hardware.biometrics.BiometricsProtoEnums;
+-import android.hardware.biometrics.SensorProperties;
+ import android.hardware.biometrics.IBiometricSensorReceiver;
+ import android.hardware.biometrics.IBiometricService;
+ import android.hardware.biometrics.IBiometricServiceLockoutResetCallback;
+@@ -40,7 +39,6 @@ import android.hardware.face.Face;
+ import android.hardware.face.FaceAuthenticateOptions;
+ import android.hardware.face.FaceEnrollOptions;
+ import android.hardware.face.FaceSensorConfigurations;
+-import android.hardware.face.FaceSensorProperties;
+ import android.hardware.face.FaceSensorPropertiesInternal;
+ import android.hardware.face.FaceServiceReceiver;
+ import android.hardware.face.IFaceAuthenticatorsRegisteredCallback;
+@@ -74,8 +72,6 @@ import com.android.server.biometrics.sensors.ClientMonitorCallbackConverter;
+ import com.android.server.biometrics.sensors.LockoutResetDispatcher;
+ import com.android.server.biometrics.sensors.LockoutTracker;
+ import com.android.server.biometrics.sensors.face.aidl.FaceProvider;
+-import com.android.server.biometrics.sensors.face.sense.SenseProvider;
+-import com.android.server.biometrics.sensors.face.sense.SenseUtils;
+ 
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+@@ -662,28 +658,12 @@ public class FaceService extends SystemService {
+                     new ClientMonitorCallbackConverter(receiver), opPackageName);
+         }
+ 
+-        private List<ServiceProvider> getSenseProviders() {
+-            final List<ServiceProvider> providers = new ArrayList<>();
+-            FaceSensorPropertiesInternal props = new FaceSensorPropertiesInternal(
+-                    SenseProvider.DEVICE_ID,
+-                    SensorProperties.STRENGTH_WEAK,
+-                    1, /** maxEnrollmentsPerUser **/
+-                    new ArrayList(),
+-                    FaceSensorProperties.TYPE_RGB,
+-                    false, /** supportsFaceDetection **/
+-                    false, /** supportsSelfIllumination **/
+-                    false); /** resetLockoutRequiresChallenge **/
+-            SenseProvider provider = new SenseProvider(getContext(), mBiometricStateCallback, props, mLockoutResetDispatcher);
+-            providers.add(provider);
+-            return providers;
+-        }
+-
+         @android.annotation.EnforcePermission(android.Manifest.permission.USE_BIOMETRIC_INTERNAL)
+         public void registerAuthenticators(
+                 FaceSensorConfigurations faceSensorConfigurations) {
+             super.registerAuthenticators_enforcePermission();
+ 
+-            if (!faceSensorConfigurations.hasSensorConfigurations() && !SenseUtils.canUseProvider()) {
++            if (!faceSensorConfigurations.hasSensorConfigurations()) {
+                 Slog.d(TAG, "No face sensors to register.");
+                 return;
+             }
+@@ -693,10 +673,6 @@ public class FaceService extends SystemService {
+         private List<ServiceProvider> getProviders(
+                 FaceSensorConfigurations faceSensorConfigurations) {
+             final List<ServiceProvider> providers = new ArrayList<>();
+-            if (SenseUtils.canUseProvider()) {
+-                providers.addAll(getSenseProviders());
+-                return providers;
+-            }
+             final Pair<String, SensorProps[]> filteredSensorProps = filterAvailableHalInstances(
+                             faceSensorConfigurations);
+             providers.add(mFaceProviderFunction.getFaceProvider(filteredSensorProps,
+diff --git a/services/core/java/com/android/server/display/DisplayManagerService.java b/services/core/java/com/android/server/display/DisplayManagerService.java
+index 4312b3b7552b..f80d204920ad 100644
+--- a/services/core/java/com/android/server/display/DisplayManagerService.java
++++ b/services/core/java/com/android/server/display/DisplayManagerService.java
+@@ -223,8 +223,6 @@ import com.android.server.wm.DesktopModeHelper;
+ import com.android.server.wm.SurfaceAnimationThread;
+ import com.android.server.wm.WindowManagerInternal;
+ 
+-import com.libremobileos.freeform.ILMOFreeformDisplayCallback;
+-
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+ import java.util.ArrayList;
+@@ -612,8 +610,6 @@ public final class DisplayManagerService extends SystemService {
+     private boolean mIncludeDefaultDisplayInTopology = true;
+     private final boolean mStableEdidsFlag;
+ 
+-    private LMOFreeformDisplayAdapter mFreeformDisplayAdapter;
+-
+     private final BroadcastReceiver mIdleModeReceiver = new BroadcastReceiver() {
+         @Override
+         public void onReceive(Context context, Intent intent) {
+@@ -2586,7 +2582,6 @@ public final class DisplayManagerService extends SystemService {
+             if (shouldRegisterNonEssentialDisplayAdaptersLocked()) {
+                 registerOverlayDisplayAdapterLocked();
+                 registerWifiDisplayAdapterLocked();
+-                registerFreeformDisplayAdapterLocked();
+             }
+         }
+     }
+@@ -2608,13 +2603,6 @@ public final class DisplayManagerService extends SystemService {
+         }
+     }
+ 
+-    private void registerFreeformDisplayAdapterLocked() {
+-        mFreeformDisplayAdapter = new LMOFreeformDisplayAdapter(
+-                mSyncRoot, mContext, mHandler, mDisplayDeviceRepo, mLogicalDisplayMapper,
+-                mUiHandler, mFlags);
+-        registerDisplayAdapterLocked(mFreeformDisplayAdapter);
+-    }
+-
+     private boolean shouldRegisterNonEssentialDisplayAdaptersLocked() {
+         // In safe mode, we disable non-essential display adapters to give the user
+         // an opportunity to fix broken settings or other problems that might affect
+@@ -7169,22 +7157,6 @@ public final class DisplayManagerService extends SystemService {
+             }
+         }
+ 
+-        public void createFreeformLocked(String name, ILMOFreeformDisplayCallback callback,
+-                int width, int height, int densityDpi, boolean secure, boolean ownContentOnly,
+-                boolean shouldShowSystemDecorations, Surface surface, float refreshRate,
+-                long presentationDeadlineNanos) {
+-            mFreeformDisplayAdapter.createFreeformLocked(name, callback, width, height, densityDpi,
+-                    secure, ownContentOnly, shouldShowSystemDecorations, surface, refreshRate,
+-                    presentationDeadlineNanos);
+-        }
+-
+-        public void resizeFreeform(IBinder appToken, int width, int height, int densityDpi) {
+-            mFreeformDisplayAdapter.resizeFreeform(appToken, width, height, densityDpi);
+-        }
+-
+-        public void releaseFreeform(IBinder appToken) {
+-            mFreeformDisplayAdapter.releaseFreeform(appToken);
+-        }
+     }
+ 
+     class DesiredDisplayModeSpecsObserver
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 6bcecfb2881e..56a196044f6c 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -136,7 +136,6 @@ import static com.android.internal.protolog.WmProtoLogGroups.WM_DEBUG_SCREEN_ON;
+ import static com.android.internal.protolog.WmProtoLogGroups.WM_DEBUG_SLEEP_TOKEN;
+ import static com.android.internal.protolog.WmProtoLogGroups.WM_SHOW_TRANSACTIONS;
+ import static com.android.internal.util.LatencyTracker.ACTION_ROTATE_SCREEN;
+-import static com.android.server.display.LMOFreeformDisplayAdapter.UNIQUE_ID_PREFIX;
+ import static com.android.server.policy.WindowManagerPolicy.FINISH_LAYOUT_REDO_ANIM;
+ import static com.android.server.policy.WindowManagerPolicy.FINISH_LAYOUT_REDO_LAYOUT;
+ import static com.android.server.policy.WindowManagerPolicy.FINISH_LAYOUT_REDO_WALLPAPER;
+@@ -584,8 +583,6 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+     // TODO(multi-display): remove some of the usages.
+     boolean isDefaultDisplay;
+ 
+-    private boolean isFreeformDisplay;
+-
+     /** Save allocating when calculating rects */
+     private final Rect mTmpRect = new Rect();
+     private final Region mTmpRegion = new Region();
+@@ -1290,7 +1287,6 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         mSystemGestureExclusionLimit = mWmService.mConstants.mSystemGestureExclusionLimitDp
+                 * mDisplayMetrics.densityDpi / DENSITY_DEFAULT;
+         isDefaultDisplay = mDisplayId == DEFAULT_DISPLAY;
+-        isFreeformDisplay = mDisplayInfo.uniqueId.startsWith(UNIQUE_ID_PREFIX);
+         mInsetsStateController = new InsetsStateController(this);
+         initializeDisplayBaseInfo();
+         mDisplayFrames = new DisplayFrames(mInsetsStateController.getRawInsetsState(),
+@@ -4797,7 +4793,7 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+ 
+     boolean forceDesktopMode() {
+         return ("VNC".equals(mDisplay.getName()) || mWmService.mForceDesktopModeOnExternalDisplays)
+-            && !isDefaultDisplay && !isFreeformDisplay && !isPrivate();
++            && !isDefaultDisplay && !isPrivate();
+     }
+ 
+     /** @see WindowManagerInternal#onToggleImeRequested */
+@@ -6155,7 +6151,7 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+         if (DesktopExperienceFlags.ENABLE_DISPLAY_CONTENT_MODE_MANAGEMENT.isTrue()) {
+             return false;
+         }
+-        if (!mWmService.mForceDesktopModeOnExternalDisplays || isDefaultDisplay || isPrivate() && !isFreeformDisplay) {
++        if (!mWmService.mForceDesktopModeOnExternalDisplays || isDefaultDisplay || isPrivate()) {
+             return false;
+         }
+         if (!isWindowingModeSupported(WINDOWING_MODE_FREEFORM)) {
+diff --git a/services/freeform/Android.bp b/services/freeform/Android.bp
+deleted file mode 100644
+index 3920451176ca..000000000000
+--- a/services/freeform/Android.bp
++++ /dev/null
+@@ -1,27 +0,0 @@
+-//
+-// SPDX-FileCopyrightText: 2023 The LibreMobileOS Foundation
+-// SPDX-FileCopyrightText: 2024-2025 crDroid Android Project
+-// SPDX-License-Identifier: Apache-2.0
+-//
+-
+-filegroup {
+-    name: "services.freeform-sources",
+-    srcs: [
+-        "java/**/*.java",
+-        "java/**/*.kt"
+-    ],
+-    path: "java",
+-    visibility: ["//frameworks/base/services"],
+-}
+-
+-java_library_static {
+-    name: "services.freeform",
+-    defaults: ["platform_service_defaults"],
+-    srcs: [":services.freeform-sources"],
+-    libs: ["services.core"],
+-    static_libs: [
+-        "kotlinx_coroutines",
+-        "lmofreeform-server",
+-    ],
+-    jarjar_rules: "jarjar-rules.txt",
+-}
+diff --git a/services/freeform/jarjar-rules.txt b/services/freeform/jarjar-rules.txt
+deleted file mode 100644
+index a50af24f3ddd..000000000000
+--- a/services/freeform/jarjar-rules.txt
++++ /dev/null
+@@ -1,2 +0,0 @@
+-rule kotlin.** com.libremobileos.server.jarjar.@0
+-rule kotlinx.** com.libremobileos.server.jarjar.@0
+diff --git a/services/freeform/java/com/android/server/display/FreeformService.java b/services/freeform/java/com/android/server/display/FreeformService.java
+deleted file mode 100644
+index af5c3a5484ec..000000000000
+--- a/services/freeform/java/com/android/server/display/FreeformService.java
++++ /dev/null
+@@ -1,59 +0,0 @@
+-/*
+- * Copyright (C) 2023-2024 LibreMobileOS Foundation
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.server.display;
+-
+-import android.content.Context;
+-import android.hardware.display.DisplayManagerInternal;
+-import android.util.Slog;
+-
+-import com.android.server.SystemService;
+-
+-import com.libremobileos.freeform.server.LMOFreeformService;
+-import com.libremobileos.freeform.server.LMOFreeformServiceHolder;
+-import com.libremobileos.freeform.server.LMOFreeformUIService;
+-
+-public class FreeformService extends SystemService {
+-
+-    private static final String TAG = "FreeformService";
+-
+-    public FreeformService(Context context) {
+-        super(context);
+-    }
+-
+-    @Override
+-    public void onStart() {
+-        // noop
+-    }
+-
+-    @Override
+-    public void onBootPhase(@BootPhase int phase) {
+-        if (phase != PHASE_ACTIVITY_MANAGER_READY || isSafeMode()) return;
+-
+-        Slog.d(TAG, "PHASE_ACTIVITY_MANAGER_READY, going to init!");
+-
+-        DisplayManagerInternal displayManager = getLocalService(DisplayManagerInternal.class);
+-        if (displayManager == null) {
+-            Slog.e(TAG, "Cannot init: DisplayManagerInternal is null!");
+-            return;
+-        }
+-
+-        LMOFreeformService service = new LMOFreeformService(displayManager);
+-        LMOFreeformUIService uiService =
+-                new LMOFreeformUIService(getContext(), displayManager, service);
+-        LMOFreeformServiceHolder.init(uiService, service);
+-    }
+-}
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index 36de95439efe..bed5b2f399ff 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -176,7 +176,6 @@ import com.android.server.criticalevents.CriticalEventLog;
+ import com.android.server.devicepolicy.DevicePolicyManagerService;
+ import com.android.server.devicestate.DeviceStateManagerService;
+ import com.android.server.display.DisplayManagerService;
+-import com.android.server.display.FreeformService;
+ import com.android.server.display.color.ColorDisplayService;
+ import com.android.server.dreams.DreamManagerService;
+ import com.android.server.emergency.EmergencyAffordanceService;
+@@ -2905,10 +2904,6 @@ public final class SystemServer implements Dumpable {
+                 t.traceEnd();
+             }
+ 
+-            t.traceBegin("FreeformService");
+-            mSystemServiceManager.startService(FreeformService.class);
+-            t.traceEnd();
+-
+             if (!isWatch) {
+                 t.traceBegin("StartPruneInstantAppsJobService");
+                 try {
+-- 
+2.43.0
+

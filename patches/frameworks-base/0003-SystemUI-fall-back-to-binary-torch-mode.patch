@@ -1,0 +1,63 @@
+From c2ffe1e6224f93d2b5d514a7c92097c767f6a626 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 16:35:41 +0000
+Subject: [PATCH 03/15] SystemUI: fall back to binary torch mode
+
+---
+ .../data/repository/FlashlightRepository.kt   | 19 +++++++++++++------
+ .../policy/FlashlightControllerImpl.java      |  9 ++++++++-
+ 2 files changed, 21 insertions(+), 7 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt b/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt
+index 918829ec921f..c6da6b9bd3be 100644
+--- a/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt
++++ b/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt
+@@ -394,12 +394,19 @@ constructor(
+             try {
+                 if (enabled != currentState.enabled) {
+                     if (currentFlashlightInfo.hasAdjustableLevels && enabled) {
+-                        cameraManager.turnOnTorchWithStrengthLevel(
+-                            currentFlashlightInfo.cameraId,
+-                            defaultEnabledLevelForUser.getOrPut(currentUserId) {
+-                                initialDefaultLevel
+-                            },
+-                        )
++                        try {
++                            cameraManager.turnOnTorchWithStrengthLevel(
++                                currentFlashlightInfo.cameraId,
++                                defaultEnabledLevelForUser.getOrPut(currentUserId) {
++                                    initialDefaultLevel
++                                },
++                            )
++                        } catch (e: CameraAccessException) {
++                            // A few vendor HALs report strength metadata but only
++                            // implement the legacy binary torch operation.
++                            logger.w("Strength torch call failed; falling back to binary mode")
++                            cameraManager.setTorchMode(currentFlashlightInfo.cameraId, true)
++                        }
+                     } else {
+                         cameraManager.setTorchMode(currentFlashlightInfo.cameraId, enabled)
+                     }
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java
+index ad5a1312a6d1..1dd20b6f62e7 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java
+@@ -181,7 +181,14 @@ public class FlashlightControllerImpl implements FlashlightController {
+                                 int level = (mCurrentLevel > 0) ? mCurrentLevel : mDefaultLevel;
+                                 level = Math.max(1, Math.min(level, mMaxLevel));
+                                 if (DEBUG) Log.d(TAG, "Turning on torch with level " + level);
+-                                mCameraManager.turnOnTorchWithStrengthLevel(mCameraId.get(), level);
++                                try {
++                                    mCameraManager.turnOnTorchWithStrengthLevel(mCameraId.get(), level);
++                                } catch (CameraAccessException e) {
++                                    // Some vendor HALs expose strength metadata but only
++                                    // support the legacy binary torch operation.
++                                    if (DEBUG) Log.d(TAG, "Falling back to binary torch mode", e);
++                                    mCameraManager.setTorchMode(mCameraId.get(), true);
++                                }
+                             } else {
+                                 if (DEBUG) Log.d(TAG, "Turning on torch (no strength support)");
+                                 mCameraManager.setTorchMode(mCameraId.get(), true);
+-- 
+2.43.0
+

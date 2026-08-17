@@ -1,0 +1,15 @@
+diff --git a/smali/b6/k1.smali b/smali/b6/k1.smali
+index 31562ae..24d8a53 100644
+--- a/smali/b6/k1.smali
++++ b/smali/b6/k1.smali
+@@ -229,6 +229,10 @@
+ .method public static a(Landroid/content/Context;)Landroid/graphics/Typeface;
+     .locals 6
+ 
++    sget-object p0, Landroid/graphics/Typeface;->DEFAULT:Landroid/graphics/Typeface;
++
++    return-object p0
++
+     .line 1
+     sget-object v0, Lb6/x;->a:Landroid/graphics/Typeface;
+ 

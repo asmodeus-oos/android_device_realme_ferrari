@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- 8GB + ZRAM: keep apps warm. 64/96 restarted too often; 1024 with no
+         swap thrashed reclaim. 256 is a soft ceiling that still bounds runaway
+         empty processes while ZRAM absorbs real memory pressure. -->
+    <integer name="config_customizedMaxCachedProcesses">256</integer>
+</resources>

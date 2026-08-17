@@ -1,0 +1,66 @@
+From 2863ca29ab9c5ba3ed3ffa9790d2dc4aca09dd3b Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 15:36:11 +0000
+Subject: [PATCH 1/5] sm8450: fix Clang warnings and initialization
+
+---
+ Makefile                                   | 3 +++
+ arch/arm64/kvm/Makefile                    | 3 +++
+ drivers/input/misc/qcom-hv-haptics.c       | 2 +-
+ drivers/thermal/qcom/cpu_voltage_cooling.c | 2 +-
+ 4 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 7d46ca221d25..562fea14f795 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1075,6 +1075,9 @@ KBUILD_CFLAGS += $(call cc-disable-warning, restrict)
+ 
+ # Enabled with W=2, disabled by default as noisy
+ KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
++# Clang 22+ treats these as errors on older vendor code
++KBUILD_CFLAGS += $(call cc-disable-warning, sometimes-uninitialized)
++KBUILD_CFLAGS += $(call cc-disable-warning, uninitialized)
+ 
+ # disable invalid "can't wrap" optimizations for signed / pointers
+ KBUILD_CFLAGS	+= -fno-strict-overflow
+diff --git a/arch/arm64/kvm/Makefile b/arch/arm64/kvm/Makefile
+index 589921392cb1..749a0986a9e3 100644
+--- a/arch/arm64/kvm/Makefile
++++ b/arch/arm64/kvm/Makefile
+@@ -25,3 +25,6 @@ kvm-y := $(KVM)/kvm_main.o $(KVM)/coalesced_mmio.o $(KVM)/eventfd.o \
+ 	 vgic/vgic-its.o vgic/vgic-debug.o
+ 
+ kvm-$(CONFIG_HW_PERF_EVENTS)  += pmu-emul.o
++
++# Work around a false positive Clang 22 -Wuninitialized-const-pointer warning
++CFLAGS_sys_regs.o := $(call cc-disable-warning, uninitialized-const-pointer)
+diff --git a/drivers/input/misc/qcom-hv-haptics.c b/drivers/input/misc/qcom-hv-haptics.c
+index 6b9134ea54aa..91bd82cada43 100644
+--- a/drivers/input/misc/qcom-hv-haptics.c
++++ b/drivers/input/misc/qcom-hv-haptics.c
+@@ -979,7 +979,7 @@ static int haptics_get_status_data(struct haptics_chip *chip,
+ 		"RNAT_RCAL_INT",
+ 		"BRAKE_CAL_SCALAR",
+ 	};
+-	const char *name;
++	const char *name = NULL;
+ 
+ 	mod_sel_val[0] = sel & 0xff;
+ 	mod_sel_val[1] = (sel >> 8) & 0xff;
+diff --git a/drivers/thermal/qcom/cpu_voltage_cooling.c b/drivers/thermal/qcom/cpu_voltage_cooling.c
+index 3365080f5737..522d29b17040 100644
+--- a/drivers/thermal/qcom/cpu_voltage_cooling.c
++++ b/drivers/thermal/qcom/cpu_voltage_cooling.c
+@@ -178,7 +178,7 @@ static struct cc_limits_data *opp_init(int *cpus)
+ {
+ 	int cpu1, cpu2;
+ 	struct device *cpu1_dev, *cpu2_dev;
+-	struct limits_freq_table *cpu1_freq_table, *cpu2_freq_table;
++	struct limits_freq_table *cpu1_freq_table = NULL, *cpu2_freq_table = NULL;
+ 	struct limits_freq_table *cpu_freq_table[CPU_MAP_CT];
+ 	int table_ct[CPU_MAP_CT], ret = 0;
+ 	struct cc_limits_data *cc_cdev = NULL;
+-- 
+2.43.0
+

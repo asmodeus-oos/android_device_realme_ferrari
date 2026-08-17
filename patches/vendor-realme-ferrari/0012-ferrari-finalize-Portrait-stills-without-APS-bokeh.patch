@@ -1,0 +1,26 @@
+From bb0055510d64255153803dad9e9c8e8f55598748 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 10:32:14 +0000
+Subject: [PATCH 12/13] ferrari: finalize Portrait stills without APS bokeh
+
+Use the CameraUnit single-frame non-bokeh path so MediaStore JPEGs
+complete while APS ALGO_BOKEH remains unresolved on this HAL.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ .../system_ext/framework/com.oplus.camera.unit.sdk.jar        | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/proprietary/system_ext/framework/com.oplus.camera.unit.sdk.jar b/proprietary/system_ext/framework/com.oplus.camera.unit.sdk.jar
+index c0fe41e..2393016 100644
+--- a/proprietary/system_ext/framework/com.oplus.camera.unit.sdk.jar
++++ b/proprietary/system_ext/framework/com.oplus.camera.unit.sdk.jar
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:e741b915530b5f824dd3656aacf5cc4cacfd92c6ffe1aa3e2eb2fed1b9e36576
+-size 1512450
++oid sha256:f0b6f18c87e9be039003a73ab6d4cf39ba58e462d036f4e57bf41399f08ea268
++size 1512630
+-- 
+2.43.0
+

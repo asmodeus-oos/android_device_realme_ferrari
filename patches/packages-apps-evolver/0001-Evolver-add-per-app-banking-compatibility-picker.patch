@@ -1,0 +1,349 @@
+From f65b181ba601212b3ff69233486fe57655bb96a5 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 06:45:13 +0000
+Subject: [PATCH 1/3] Evolver: add per-app banking compatibility picker
+
+---
+ res/values/evolution_strings.xml              |   7 +
+ res/xml/spoofing.xml                          |   7 +
+ .../BankingCompatibilitySettings.kt           | 292 ++++++++++++++++++
+ 3 files changed, 306 insertions(+)
+ create mode 100644 src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt
+
+diff --git a/res/values/evolution_strings.xml b/res/values/evolution_strings.xml
+index b18050b..c6dd787 100644
+--- a/res/values/evolution_strings.xml
++++ b/res/values/evolution_strings.xml
+@@ -1072,6 +1072,13 @@
+     <string name="spoofing_pixel_props_title">Pixel props</string>
+     <string name="spoofing_pixel_props_summary">Spoof selected apps as a Pixel device to unlock Pixel-exclusive features</string>
+     <string name="spoofing_app_specific_category">App-specific overrides</string>
++    <string name="banking_compatibility_title">Banking app compatibility</string>
++    <string name="banking_compatibility_summary">Hide developer options, ADB, and active USB state from selected apps</string>
++    <string name="banking_compatibility_description">Select banking and payment apps that refuse to run when developer options or a USB connection is active. The real device settings remain unchanged.</string>
++    <string name="banking_compatibility_none_configured">No apps selected</string>
++    <string name="banking_compatibility_count">%1$d apps protected</string>
++    <string name="banking_compatibility_empty_description">No installed apps match the current search and system-app filter.</string>
++    <string name="banking_compatibility_footer">This compatibility preset is independent of Play Integrity and TrickyStore. Only target an app in TrickyStore if it actually requires hardware-backed attestation.</string>
+     <string name="spoofing_photos_title">Google Photos</string>
+     <string name="spoofing_photos_summary">Spoof Google Photos as a Pixel XL</string>
+     <string name="spoofing_snap_title">Snapchat</string>
+diff --git a/res/xml/spoofing.xml b/res/xml/spoofing.xml
+index 7128c12..4959074 100644
+--- a/res/xml/spoofing.xml
++++ b/res/xml/spoofing.xml
+@@ -67,6 +67,13 @@
+         android:key="spoofing_app_specific_category"
+         android:title="@string/spoofing_app_specific_category">
+ 
++        <!-- Banking and payment apps -->
++        <Preference
++            android:key="banking_compatibility"
++            android:title="@string/banking_compatibility_title"
++            android:summary="@string/banking_compatibility_summary"
++            android:fragment="org.evolution.settings.fragments.miscellaneous.BankingCompatibilitySettings" />
++
+         <!-- Google Photos -->
+         <org.evolution.settings.preferences.SecureSettingSwitchPreference
+             android:key="pi_photos_spoof"
+diff --git a/src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt b/src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt
+new file mode 100644
+index 0000000..e0cccef
+--- /dev/null
++++ b/src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt
+@@ -0,0 +1,292 @@
++/*
++ * SPDX-FileCopyrightText: Evolution X
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++package org.evolution.settings.fragments.miscellaneous
++
++import android.app.ActivityManager
++import android.app.AxSandboxManager
++import android.os.Bundle
++import android.view.LayoutInflater
++import android.view.View
++import android.view.ViewGroup
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.size
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.items
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.Check
++import androidx.compose.material.icons.filled.Shield
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.FilterChip
++import androidx.compose.material3.Icon
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.OutlinedButton
++import androidx.compose.material3.Scaffold
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateListOf
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.rememberCoroutineScope
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.platform.ComposeView
++import androidx.compose.ui.platform.ViewCompositionStrategy
++import androidx.compose.ui.res.stringResource
++import androidx.compose.ui.unit.dp
++import com.android.internal.logging.nano.MetricsProto
++import com.android.settings.R
++import com.android.settings.SettingsPreferenceFragment
++import com.android.settingslib.spa.framework.theme.SettingsTheme
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.launch
++import kotlinx.coroutines.withContext
++
++private const val BANKING_COMPATIBILITY = "banking_compatibility"
++
++class BankingCompatibilitySettings : SettingsPreferenceFragment() {
++
++    override fun onCreate(savedInstanceState: Bundle?) {
++        super.onCreate(savedInstanceState)
++        requireActivity().title = getString(R.string.banking_compatibility_title)
++    }
++
++    override fun getMetricsCategory() = MetricsProto.MetricsEvent.VIEW_UNKNOWN
++
++    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {}
++
++    override fun onCreateView(
++        inflater: LayoutInflater,
++        container: ViewGroup?,
++        savedInstanceState: Bundle?,
++    ): View = ComposeView(requireContext()).apply {
++        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
++        setContent {
++            SettingsTheme {
++                BankingCompatibilityContent(context = requireContext())
++            }
++        }
++    }
++}
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++private fun BankingCompatibilityContent(context: android.content.Context) {
++    val packageManager = context.packageManager
++    val activityManager = context.getSystemService(ActivityManager::class.java)
++    val sandboxManager = context.getSystemService(AxSandboxManager::class.java)
++    val scope = rememberCoroutineScope()
++
++    var searchQuery by remember { mutableStateOf("") }
++    var showSystemApps by remember { mutableStateOf(false) }
++    var isLoading by remember { mutableStateOf(true) }
++    val allApps = remember { mutableStateListOf<AppListEntry>() }
++
++    LaunchedEffect(showSystemApps) {
++        isLoading = true
++        val installed = withContext(Dispatchers.IO) {
++            val targeted = packageManager.getInstalledApplications(0)
++                .asSequence()
++                .map { it.packageName }
++                .filter { packageName ->
++                    runCatching {
++                        sandboxManager?.isSpoofSettingEnabled(
++                            packageName, BANKING_COMPATIBILITY) == true
++                    }.getOrDefault(false)
++                }
++                .toSet()
++
++            filterInstalledApps(
++                pm = packageManager,
++                showSystem = showSystemApps,
++                targeted = targeted,
++                extraFilter = { app ->
++                    app.packageName != context.packageName
++                            && !app.packageName.contains("android.settings")
++                },
++            )
++                .sortedWith(targetedFirstComparator(packageManager, targeted))
++                .map { app ->
++                    AppListEntry(
++                        packageName = app.packageName,
++                        label = packageManager.getApplicationLabel(app).toString(),
++                        icon = runCatching {
++                            packageManager.getApplicationIcon(app)
++                        }.getOrNull(),
++                        isSystem = app.flags
++                                and android.content.pm.ApplicationInfo.FLAG_SYSTEM != 0,
++                        isSelected = app.packageName in targeted,
++                    )
++                }
++        }
++
++        allApps.clear()
++        allApps.addAll(installed)
++        isLoading = false
++    }
++
++    val filteredApps = remember(searchQuery, allApps.toList()) {
++        val query = searchQuery.lowercase()
++        allApps.filter { app ->
++            query.isEmpty()
++                    || app.label.lowercase().contains(query)
++                    || app.packageName.lowercase().contains(query)
++        }
++    }
++    val activeCount = allApps.count { it.isSelected }
++
++    Scaffold(containerColor = Color.Transparent) { innerPadding ->
++        Column(
++            modifier = Modifier
++                .fillMaxSize()
++                .padding(innerPadding)
++                .padding(horizontal = 16.dp),
++        ) {
++            Spacer(modifier = Modifier.height(8.dp))
++
++            SpoofingHeaderCard(
++                title = stringResource(R.string.banking_compatibility_title),
++                subtitle = if (activeCount == 0) {
++                    stringResource(R.string.banking_compatibility_none_configured)
++                } else {
++                    stringResource(R.string.banking_compatibility_count, activeCount)
++                },
++            ) {
++                Icon(
++                    Icons.Default.Shield,
++                    contentDescription = null,
++                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
++                    modifier = Modifier.size(26.dp),
++                )
++            }
++
++            Spacer(modifier = Modifier.height(12.dp))
++
++            Text(
++                text = stringResource(R.string.banking_compatibility_description),
++                style = MaterialTheme.typography.bodyMedium,
++                color = MaterialTheme.colorScheme.onSurfaceVariant,
++                modifier = Modifier.padding(horizontal = 4.dp),
++            )
++
++            Spacer(modifier = Modifier.height(12.dp))
++
++            AppPickerSearchField(
++                query = searchQuery,
++                onQueryChange = { searchQuery = it },
++            )
++
++            Spacer(modifier = Modifier.height(8.dp))
++
++            Row(
++                modifier = Modifier.fillMaxWidth(),
++                horizontalArrangement = Arrangement.SpaceBetween,
++                verticalAlignment = Alignment.CenterVertically,
++            ) {
++                FilterChip(
++                    selected = showSystemApps,
++                    onClick = { showSystemApps = !showSystemApps },
++                    label = { Text(stringResource(R.string.show_system_apps)) },
++                    leadingIcon = if (showSystemApps) {
++                        {
++                            Icon(
++                                Icons.Default.Check,
++                                contentDescription = null,
++                                modifier = Modifier.size(18.dp),
++                            )
++                        }
++                    } else null,
++                )
++
++                OutlinedButton(
++                    onClick = {
++                        val selectedPackages = allApps.filter { it.isSelected }
++                            .map { it.packageName }
++                            .toSet()
++                        allApps.indices.forEach { index ->
++                            allApps[index] = allApps[index].copy(isSelected = false)
++                        }
++                        scope.launch(Dispatchers.IO) {
++                            selectedPackages.forEach { packageName ->
++                                runCatching {
++                                    sandboxManager?.setSpoofSettingEnabled(
++                                        packageName, BANKING_COMPATIBILITY, false)
++                                }
++                            }
++                            killPackages(activityManager, selectedPackages)
++                        }
++                    },
++                    enabled = activeCount > 0,
++                ) {
++                    Text(stringResource(R.string.action_clear))
++                }
++            }
++
++            Spacer(modifier = Modifier.height(8.dp))
++
++            if (isLoading) {
++                SpoofingLoadingBox(modifier = Modifier.weight(1f))
++            } else if (filteredApps.isEmpty()) {
++                SpoofingEmptyState(
++                    icon = Icons.Default.Shield,
++                    title = stringResource(R.string.app_spoofing_no_apps_available),
++                    description = stringResource(R.string.banking_compatibility_empty_description),
++                    modifier = Modifier.weight(1f),
++                )
++            } else {
++                LazyColumn(
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .weight(1f),
++                    verticalArrangement = Arrangement.spacedBy(6.dp),
++                ) {
++                    items(filteredApps, key = { it.packageName }) { app ->
++                        AppPickerItem(
++                            packageName = app.packageName,
++                            label = app.label,
++                            icon = app.icon,
++                            isSystem = app.isSystem,
++                            checked = app.isSelected,
++                            enabled = sandboxManager != null,
++                            onToggle = { enabled ->
++                                val index = allApps.indexOfFirst {
++                                    it.packageName == app.packageName
++                                }
++                                if (index < 0) return@AppPickerItem
++                                allApps[index] = allApps[index].copy(isSelected = enabled)
++                                scope.launch(Dispatchers.IO) {
++                                    runCatching {
++                                        sandboxManager?.setSpoofSettingEnabled(
++                                            app.packageName, BANKING_COMPATIBILITY, enabled)
++                                    }
++                                    stopPackage(activityManager, app.packageName)
++                                }
++                            },
++                        )
++                    }
++                    item {
++                        Text(
++                            text = stringResource(R.string.banking_compatibility_footer),
++                            style = MaterialTheme.typography.bodySmall,
++                            color = MaterialTheme.colorScheme.onSurfaceVariant,
++                            modifier = Modifier.padding(8.dp, 12.dp, 8.dp, 80.dp),
++                        )
++                    }
++                }
++            }
++        }
++    }
++}
+-- 
+2.43.0
+

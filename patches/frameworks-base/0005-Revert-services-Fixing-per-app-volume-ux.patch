@@ -1,0 +1,96 @@
+From 5927bc814a0b53569000fd1d4eef0e302ff744f6 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 5 Aug 2026 17:24:35 +0000
+Subject: [PATCH 05/15] Revert "services: Fixing per-app volume ux"
+
+This reverts commit 6a9eabc964c513616da02ed780f531071a10d0bd.
+---
+ .../android/server/audio/AudioService.java    | 30 -------------------
+ 1 file changed, 30 deletions(-)
+
+diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
+index cad3065678d1..7f9555c7713c 100644
+--- a/services/core/java/com/android/server/audio/AudioService.java
++++ b/services/core/java/com/android/server/audio/AudioService.java
+@@ -162,7 +162,6 @@ import android.hardware.hdmi.HdmiTvClient;
+ import android.hardware.input.InputManager;
+ import android.hardware.usb.UsbManager;
+ import android.hidl.manager.V1_0.IServiceManager;
+-import android.media.AppVolume;
+ import android.media.AudioAttributes;
+ import android.media.AudioAttributes.AttributeSystemUsage;
+ import android.media.AudioDescriptor;
+@@ -424,7 +423,6 @@ public class AudioService extends IAudioService.Stub
+ 
+     final Context mContext;
+     private final ContentResolver mContentResolver;
+-    private int mShowAppVolume;
+     private final AppOpsManager mAppOps;
+ 
+     /** do not use directly, use getMediaSessionManager() which handles lazy initialization */
+@@ -3578,9 +3576,6 @@ public class AudioService extends IAudioService.Stub
+ 
+         updateMasterBalance(cr);
+ 
+-        mShowAppVolume = mSettings.getSystemIntForUser(cr,
+-                Settings.System.SHOW_APP_VOLUME, 0, UserHandle.USER_CURRENT);
+-
+         // Each stream will read its own persisted settings
+ 
+         // Broadcast the sticky intents
+@@ -12159,8 +12154,6 @@ public class AudioService extends IAudioService.Stub
+                     Settings.System.MASTER_MONO), false, this, UserHandle.USER_ALL);
+             mContentResolver.registerContentObserver(Settings.System.getUriFor(
+                     Settings.System.MASTER_BALANCE), false, this, UserHandle.USER_ALL);
+-            mContentResolver.registerContentObserver(Settings.System.getUriFor(
+-                    Settings.System.SHOW_APP_VOLUME), false, this);
+ 
+             mEncodedSurroundMode = mSettings.getGlobalInt(
+                     mContentResolver, Settings.Global.ENCODED_SURROUND_OUTPUT,
+@@ -12194,7 +12187,6 @@ public class AudioService extends IAudioService.Stub
+                 readDockAudioSettings(mContentResolver);
+                 updateMasterMono(mContentResolver);
+                 updateMasterBalance(mContentResolver);
+-                updateShowAppVolume(mContentResolver);
+             }
+ 
+             synchronized (mSurroundLock) {
+@@ -12207,17 +12199,6 @@ public class AudioService extends IAudioService.Stub
+             }
+         }
+ 
+-        private void updateShowAppVolume(ContentResolver cr) {
+-            int showAppVolume = mSettings.getSystemIntForUser(cr,
+-                    Settings.System.SHOW_APP_VOLUME, 0, UserHandle.USER_CURRENT);
+-            if (mShowAppVolume != showAppVolume) {
+-                mShowAppVolume = showAppVolume;
+-                if (mShowAppVolume == 0) {
+-                    resetAppVolumes();
+-                }
+-            }
+-        }
+-
+         @GuardedBy("mSurroundLock")
+         private void updateEncodedSurroundOutput() {
+             int newSurroundMode = mSettings.getGlobalInt(
+@@ -12236,17 +12217,6 @@ public class AudioService extends IAudioService.Stub
+         }
+     }
+ 
+-    private void resetAppVolumes() {
+-        ArrayList<AppVolume> volumes = new ArrayList<>();
+-        int status = AudioSystem.listAppVolumes(volumes);
+-        if (status == AudioSystem.SUCCESS) {
+-            for (AppVolume vol : volumes) {
+-                AudioSystem.setAppVolume(vol.getPackageName(), 1.0f);
+-                AudioSystem.setAppMute(vol.getPackageName(), false);
+-            }
+-        }
+-    }
+-
+     private void avrcpSupportsAbsoluteVolume(String address, boolean support) {
+         // address is not used for now, but may be used when multiple a2dp devices are supported
+         sVolumeLogger.enqueue(new EventLogger.StringEvent("avrcpSupportsAbsoluteVolume addr="
+-- 
+2.43.0
+

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<displayConfiguration>
+    <densityMapping>
+        <density>
+            <height>2412</height>
+            <width>1080</width>
+            <density>450</density>
+        </density>
+        <density default="true">
+            <height>3216</height>
+            <width>1440</width>
+            <density>600</density>
+        </density>
+    </densityMapping>
+    <screenBrightnessMap interpolation="linear">
+        <point>
+            <value>0.00097680097</value>
+            <nits>2.0</nits>
+        </point>
+        <point>
+            <value>1.0</value>
+            <nits>800.0</nits>
+        </point>
+    </screenBrightnessMap>
+    <highBrightnessMode enabled="true">
+        <transitionPoint>0.50036665851</transitionPoint>
+        <minimumHdrPercentOfScreen>0.1</minimumHdrPercentOfScreen>
+        <minimumLux>8700</minimumLux>
+        <timing>
+            <timeWindowSecs>1800</timeWindowSecs>
+            <timeMaxSecs>300</timeMaxSecs>
+            <timeMinSecs>60</timeMinSecs>
+        </timing>
+        <sdrHdrRatioMap>
+            <point>
+                <sdrNits>2.000</sdrNits>
+                <hdrRatio>8.000</hdrRatio>
+            </point>
+            <point>
+                <sdrNits>500.000</sdrNits>
+                <hdrRatio>1.5</hdrRatio>
+            </point>
+        </sdrHdrRatioMap>
+    </highBrightnessMode>
+    <screenBrightnessRampFastDecrease>0.025</screenBrightnessRampFastDecrease>
+    <screenBrightnessRampFastIncrease>0.025</screenBrightnessRampFastIncrease>
+    <screenBrightnessRampSlowDecrease>0.010</screenBrightnessRampSlowDecrease>
+    <screenBrightnessRampSlowIncrease>0.012</screenBrightnessRampSlowIncrease>
+    <screenBrightnessRampIncreaseMaxMillis>5000</screenBrightnessRampIncreaseMaxMillis>
+    <screenBrightnessRampDecreaseMaxMillis>5000</screenBrightnessRampDecreaseMaxMillis>
+</displayConfiguration>

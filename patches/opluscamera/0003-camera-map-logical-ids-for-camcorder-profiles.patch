@@ -1,0 +1,13 @@
+diff --git a/smali_classes12/sf/m0.smali b/smali_classes12/sf/m0.smali
+index 76be9ee..58e3d9c 100644
+--- a/smali_classes12/sf/m0.smali
++++ b/smali_classes12/sf/m0.smali
+@@ -8481,7 +8481,7 @@
+     .line 299
+     :cond_11
+     :try_start_0
+-    invoke-virtual {p0}, Lcom/oplus/camera/module/BaseMode;->getCameraId()I
++    invoke-virtual {p0}, Lcom/oplus/camera/module/BaseMode;->isFrontCamera()Z
+ 
+     .line 300
+     .line 301

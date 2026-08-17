@@ -1,0 +1,83 @@
+diff --git a/smali_classes11/jf/q.smali b/smali_classes11/jf/q.smali
+--- a/smali_classes11/jf/q.smali
++++ b/smali_classes11/jf/q.smali
+@@ -200,6 +200,14 @@
+     return-object p0
+ .end method
+ 
++.method public final a6()I
++    .locals 1
++
++    const/4 v0, 0x1
++
++    return v0
++.end method
++
+ .method public final I9(Ljava/lang/String;)Z
+     .locals 2
+ 
+diff --git a/smali_classes12/com/oplus/camera/module/BaseMode.smali b/smali_classes12/com/oplus/camera/module/BaseMode.smali
+--- a/smali_classes12/com/oplus/camera/module/BaseMode.smali
++++ b/smali_classes12/com/oplus/camera/module/BaseMode.smali
+@@ -10539,6 +10539,8 @@
+     .line 227
+     .line 228
+     :cond_6
++    iget-object v2, p0, Lcom/oplus/camera/module/BaseMode;->S:Ljava/lang/String;
++
+     invoke-virtual {p0, p1, v3}, Lcom/oplus/camera/module/BaseMode;->B6(Lt6/a1;Z)Landroid/util/Size;
+ 
+     .line 229
+@@ -10584,6 +10586,25 @@
+ 
+     .line 250
+     .line 251
++    # Ferrari's physical microscope camera exposes 1080x1080 YUV preview.
++    # The generic square-mode alignment below selects an unsupported 1088x1088.
++    const-string p0, "microscope"
++
++    invoke-virtual {p0, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result p0
++
++    if-eqz p0, :cond_ferrari_default_square
++
++    new-instance v6, Landroid/util/Size;
++
++    const/16 p0, 0x438
++
++    invoke-direct {v6, p0, p0}, Landroid/util/Size;-><init>(II)V
++
++    goto :cond_7
++
++    :cond_ferrari_default_square
+     new-instance v6, Landroid/util/Size;
+ 
+     .line 252
+diff --git a/smali_classes12/com/oplus/camera/module/processor/captureprocessor/CaptureProcessor.smali b/smali_classes12/com/oplus/camera/module/processor/captureprocessor/CaptureProcessor.smali
+--- a/smali_classes12/com/oplus/camera/module/processor/captureprocessor/CaptureProcessor.smali
++++ b/smali_classes12/com/oplus/camera/module/processor/captureprocessor/CaptureProcessor.smali
+@@ -6256,6 +6256,23 @@
+     :goto_2
+     iput-object v5, p2, Lt6/o;->o:Ljava/lang/String;
+ 
++    # Ferrari's microscope sensor cannot service the ten-frame SWMF burst
++    # requested by this newer app. Keep app and CameraUnit counts in sync.
++    const-string v6, "microscope"
++
++    invoke-virtual {v6, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v5
++
++    if-eqz v5, :cond_ferrari_keep_capture_count
++
++    const/4 v5, 0x1
++
++    iput v5, p2, Lt6/o;->m:I
++
++    iput v5, v3, Lt6/c;->e:I
++
++    :cond_ferrari_keep_capture_count
+     .line 81
+     .line 82
+     iget-object v5, p0, Lcom/oplus/camera/module/processor/captureprocessor/CaptureProcessor;->i:Lcom/oplus/camera/a;

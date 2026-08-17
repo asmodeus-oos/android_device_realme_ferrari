@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 The Evolution X Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<config>
+    <initial-package-state package="com.oplus.camera" stopped="false"/>
+</config>

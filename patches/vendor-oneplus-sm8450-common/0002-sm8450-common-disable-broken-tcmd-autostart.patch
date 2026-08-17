@@ -1,0 +1,30 @@
+From 1ca02c47e9e7df9a573ca519a867b4429e53ecfd Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH 2/4] sm8450-common: disable broken tcmd autostart
+
+---
+ proprietary/system_ext/etc/init/tcmd.rc | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/proprietary/system_ext/etc/init/tcmd.rc b/proprietary/system_ext/etc/init/tcmd.rc
+index b8ffc34..8e5f687 100644
+--- a/proprietary/system_ext/etc/init/tcmd.rc
++++ b/proprietary/system_ext/etc/init/tcmd.rc
+@@ -10,8 +10,11 @@ service tcmd /system/system_ext/bin/tcmd
+     user system
+     disabled
+ 
+-on property:persist.vendor.tcmd.feature=1
+-    start tcmd
++# The extracted tcmd binary uses an old seccomp profile and crashes on Android
++# 17 (SIGSYS on lseek), causing a noisy crash loop during boot.  It is an
++# optional diagnostic daemon and is not required by the phone, so do not start
++# it automatically.  Keep the stop action so an old persisted property cannot
++# leave a stale instance running after an OTA.
+ 
+ on property:persist.vendor.tcmd.feature=0
+     stop tcmd
+-- 
+2.43.0
+

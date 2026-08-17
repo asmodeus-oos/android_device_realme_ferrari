@@ -1,0 +1,29 @@
+From 9ed90e53e3ed5fdef5d8b4e396dd72c0d248aa32 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 17:33:12 +0000
+Subject: [PATCH 5/5] oplus_touchscreen_v2: stop reporting
+ ABS_TOUCH_COST_TIME_KERNEL
+
+Vendor latency telemetry on ABS 0x21 can confuse launcher input during
+app-close animations and cause drawer flicker.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ .../touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c  | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c b/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c
+index 4167a1990025..e62713b90973 100755
+--- a/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c
++++ b/drivers/input/touchscreen/oplus_touchscreen_v2/touchpanel_common_driver.c
+@@ -506,7 +506,6 @@ static inline void tp_touch_down(struct touchpanel_data *ts, struct point_info p
+ 	}
+ 	if (ts->last_x_y_point[id].x != points.x || ts->last_x_y_point[id].y != points.y) {
+ 		cost_time = ktime_to_us(ktime_get()) - ktime_to_us(ts->monitor_data.irq_to_report_timer);
+-		input_report_abs(ts->input_dev, ABS_TOUCH_COST_TIME_KERNEL, (cost_time < MAX_TOUCH_COST_TIME) ? cost_time : MAX_TOUCH_COST_TIME);
+ 	}
+ 	ts->last_x_y_point[id].x = points.x;
+ 	ts->last_x_y_point[id].y = points.y;
+-- 
+2.43.0
+

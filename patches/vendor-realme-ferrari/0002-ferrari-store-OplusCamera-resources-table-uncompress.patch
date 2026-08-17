@@ -1,0 +1,22 @@
+From b38087fc07aedf672f485c91ac7cc609ffc5b3aa Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:42:55 +0000
+Subject: [PATCH 02/13] ferrari: store OplusCamera resources table uncompressed
+
+---
+ proprietary/product/priv-app/OplusCamera/OplusCamera.apk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/proprietary/product/priv-app/OplusCamera/OplusCamera.apk b/proprietary/product/priv-app/OplusCamera/OplusCamera.apk
+index 741ede6..5885291 100644
+--- a/proprietary/product/priv-app/OplusCamera/OplusCamera.apk
++++ b/proprietary/product/priv-app/OplusCamera/OplusCamera.apk
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:5d85b9a2f70bfa2d82c1d78ea146d8fa0252d0b4c8c56475dbfdc442b9addace
+-size 133136028
++oid sha256:4c1d2bba4e81afa572ba02da3f5bf5f0383796bcdf0f8b5a8a2e2a4b59fd011a
++size 149186587
+-- 
+2.43.0
+

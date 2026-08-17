@@ -1,0 +1,91 @@
+diff --git a/smali/com/oplus/camera/configure/CameraConfig.smali b/smali/com/oplus/camera/configure/CameraConfig.smali
+index 6ce50f9..ee1a0d1 100644
+--- a/smali/com/oplus/camera/configure/CameraConfig.smali
++++ b/smali/com/oplus/camera/configure/CameraConfig.smali
+@@ -819,5 +819,86 @@
+ .method public static getConfigBooleanValue(Ljava/lang/String;)Z
+     .locals 5
+ 
++    # Ferrari's OOS camera configuration omits these newer Oplus aliases even
++    # though its HAL advertises the corresponding physical capabilities.
++    # Keep this list deliberately limited to values confirmed by the device.
++    const-string v0, "com.oplus.feature.microscope.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oppo.feature.microscope.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.video.720p.60fps.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.video.1080p.60fps.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.video.4k.60fps.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.slow.video.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.slowvideo.1080p.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.slowvideo.720p.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-nez v0, :ferrari_supported_feature
++
++    const-string v0, "com.oplus.feature.slowvideo.ultra.wide.480fps.support"
++
++    invoke-virtual {v0, p0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
++
++    move-result v0
++
++    if-eqz v0, :ferrari_continue
++
++    :ferrari_supported_feature
++    const/4 v0, 0x1
++
++    return v0
++
++    :ferrari_continue
+     .line 1
+     sget-object v0, Lcom/oplus/camera/configure/CameraConfig;->f:Ljava/util/concurrent/ConcurrentHashMap;

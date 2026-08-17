@@ -1,0 +1,49 @@
+From 9b7d4729f36c1dcd25c5bfc374b504cb786e4ef8 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH 1/4] sm8450-common: fix proprietary blob dependencies
+
+---
+ Android.bp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index ddbae3e..cc9451b 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -5091,7 +5091,7 @@ cc_prebuilt_library_shared {
+             ],
+             shared_libs: [
+                 "liblog",
+-                "libc",
++                "libutils",
+                 "libcutils",
+                 "libhidlbase",
+                 "libutils",
+@@ -18799,7 +18799,6 @@ cc_prebuilt_library_shared {
+                 "proprietary/system_ext/lib64/libwfdservice.so",
+             ],
+             shared_libs: [
+-                "libaudiobase",
+                 "liblog",
+                 "libutils",
+                 "libcutils",
+@@ -18818,6 +18817,7 @@ cc_prebuilt_library_shared {
+                 "android.media.audio.common.types-V5-cpp",
+                 "libwfdmmsrc_system",
+                 "libwfdavenhancements",
++                "libaudiobase",
+                 "libhidlbase",
+                 "vendor.qti.hardware.wifidisplaysession@1.0",
+                 "vendor.qti.hardware.wifidisplaysession_aidl-V1-ndk",
+@@ -23615,6 +23615,7 @@ cc_prebuilt_binary {
+ cc_prebuilt_binary {
+     name: "horae",
+     owner: "oneplus",
++    check_elf_files: false,
+     target: {
+         android_arm64: {
+             srcs: [
+-- 
+2.43.0
+

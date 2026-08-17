@@ -1,0 +1,23 @@
+From 0d3e42b42ebba40641ae093f8de2700913034ad6 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Tue, 11 Aug 2026 17:21:14 +0000
+Subject: [PATCH 07/13] ferrari: enable OPlusCamera high-speed and microscope
+ modes
+
+---
+ proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk b/proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk
+index c2b65dc..d634f89 100644
+--- a/proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk
++++ b/proprietary/system_ext/priv-app/OplusCamera/OplusCamera.apk
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:98940ce4feaf36d7ca67d446130fc839eca4e1807f00536cab3ce4e24cf7e13d
+-size 90448966
++oid sha256:622b009fcd3ebbcd2aa7950975bc38df91a1db153eb3adc37d29a659b58b683d
++size 90451166
+-- 
+2.43.0
+

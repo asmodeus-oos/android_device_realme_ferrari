@@ -1,0 +1,31 @@
+From 79e69311c0ed254554474af6c67bb9a5c57bae28 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Tue, 11 Aug 2026 20:36:44 +0000
+Subject: [PATCH 10/13] ferrari: stabilize camera provider session teardown
+
+---
+ proprietary/odm/lib64/libextensionlayer.so          | 2 +-
+ proprietary/vendor/lib64/hw/com.qti.chi.override.so | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/proprietary/odm/lib64/libextensionlayer.so b/proprietary/odm/lib64/libextensionlayer.so
+index 9e45452..5f3fbf4 100644
+--- a/proprietary/odm/lib64/libextensionlayer.so
++++ b/proprietary/odm/lib64/libextensionlayer.so
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:0296f5eeb4552357546356da703a986565bd40db8734c373720b1a1003611e8e
++oid sha256:1d7c34f04aee14c44e7722a472f1ce2ada62ec3763f70cada94696e84cd570f6
+ size 1309473
+diff --git a/proprietary/vendor/lib64/hw/com.qti.chi.override.so b/proprietary/vendor/lib64/hw/com.qti.chi.override.so
+index bd27db5..f7e00a3 100644
+--- a/proprietary/vendor/lib64/hw/com.qti.chi.override.so
++++ b/proprietary/vendor/lib64/hw/com.qti.chi.override.so
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:84d6e0a70c60ca507124e3ea579f48734d32a8d96aaf608697381af6a077e2b7
++oid sha256:607ca61c639046d7fd211ff3aa288689d7d3a64fa1bd6b69dc39e13725ef3d98
+ size 4417992
+-- 
+2.43.0
+

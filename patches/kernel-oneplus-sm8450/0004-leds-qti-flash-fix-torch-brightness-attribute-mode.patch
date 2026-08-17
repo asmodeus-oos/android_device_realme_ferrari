@@ -1,0 +1,36 @@
+From 0bb1376f1545430c5a9f0c4f3662c9d78546aa36 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Sat, 8 Aug 2026 14:39:41 +0000
+Subject: [PATCH 4/5] leds: qti-flash: fix torch brightness attribute mode
+
+The __ATTR macro mode goes through VERIFY_OCTAL_PERMISSIONS, which
+rejects modes with S_IWOTH set, so 0666 breaks the build. The attribute
+is never created and only serves as the chmod target for the LED class
+brightness node; use 0644 there and keep the runtime chmod at 0666.
+---
+ drivers/leds/leds-qti-flash.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/leds/leds-qti-flash.c b/drivers/leds/leds-qti-flash.c
+index 38bd0ed9c178..87fe32a52dcf 100644
+--- a/drivers/leds/leds-qti-flash.c
++++ b/drivers/leds/leds-qti-flash.c
+@@ -1733,8 +1733,14 @@ static int register_flash_device(struct qti_flash_led *led,
+ 	 * brightness node is root-only by default.
+ 	 */
+ 	if (fnode->type == FLASH_LED_TYPE_TORCH) {
++		/*
++		 * The attribute is never created, it only serves as the chmod
++		 * target for the LED class brightness node. __ATTR rejects
++		 * modes with S_IWOTH (VERIFY_OCTAL_PERMISSIONS), so use a
++		 * standard mode here and apply 0666 at runtime via chmod.
++		 */
+ 		static struct device_attribute torch_brightness_attr =
+-			__ATTR(brightness, 0666, NULL, NULL);
++			__ATTR(brightness, 0644, NULL, NULL);
+ 		sysfs_chmod_file(&fnode->fdev.led_cdev.dev->kobj,
+ 			&torch_brightness_attr.attr, 0666);
+ 	}
+-- 
+2.43.0
+

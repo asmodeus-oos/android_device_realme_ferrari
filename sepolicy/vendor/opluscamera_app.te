@@ -1,0 +1,10 @@
+allow opluscamera_app vendor_hal_orms_hwservice:hwservice_manager find;
+
+# APS/AI processing uses the Qualcomm DSP devices and stock camera data.
+allow opluscamera_app vendor_qdsp_device:chr_file { ioctl read };
+allow opluscamera_app vendor_xdsp_device:chr_file r_file_perms;
+allow opluscamera_app public_adsprpcd_file:file r_file_perms;
+
+allow opluscamera_app vendor_camera_data_file:dir create_dir_perms;
+allow opluscamera_app vendor_camera_data_file:file create_file_perms;
+r_dir_file(opluscamera_app, vendor_persist_camera_file)

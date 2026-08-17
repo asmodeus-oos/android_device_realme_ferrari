@@ -1,0 +1,78 @@
+From f063d3f4fdac279f778cabaa4c04a7b08799cb49 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Fri, 14 Aug 2026 16:09:47 +0000
+Subject: [PATCH 4/4] sm8450-common: stop packaging unused ADSP blobs
+
+Keep Android.bp and the vendor makefile in sync with the removed
+QVR/wrong-SoC ADSP skeletons so they are not copied into vendor.img.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ Android.bp              | 27 ---------------------------
+ sm8450-common-vendor.mk |  3 ---
+ 2 files changed, 30 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index cc9451b..799621a 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -17715,24 +17715,6 @@ prebuilt_rfsa {
+     soc_specific: true,
+ }
+ 
+-prebuilt_rfsa {
+-    name: "vendor_lib_rfsa_adsp_libtracker_6dof_skel_8250_so",
+-    filename: "libtracker_6dof_skel_8250.so",
+-    owner: "oneplus",
+-    src: "proprietary/vendor/lib/rfsa/adsp/libtracker_6dof_skel_8250.so",
+-    relative_install_path: "adsp",
+-    soc_specific: true,
+-}
+-
+-prebuilt_rfsa {
+-    name: "vendor_lib_rfsa_adsp_libtracker_6dof_skel_8350_so",
+-    filename: "libtracker_6dof_skel_8350.so",
+-    owner: "oneplus",
+-    src: "proprietary/vendor/lib/rfsa/adsp/libtracker_6dof_skel_8350.so",
+-    relative_install_path: "adsp",
+-    soc_specific: true,
+-}
+-
+ prebuilt_rfsa {
+     name: "vendor_lib_rfsa_adsp_libvpp_ais_networks",
+     filename: "libvpp_ais_networks",
+@@ -17751,15 +17733,6 @@ prebuilt_rfsa {
+     soc_specific: true,
+ }
+ 
+-prebuilt_rfsa {
+-    name: "vendor_lib_rfsa_adsp_libvpt_action_recognition",
+-    filename: "libvpt_action_recognition",
+-    owner: "oneplus",
+-    src: "proprietary/vendor/lib/rfsa/adsp/libvpt_action_recognition",
+-    relative_install_path: "adsp",
+-    soc_specific: true,
+-}
+-
+ cc_prebuilt_library_shared {
+     name: "com.qualcomm.qti.dpm.api@1.0",
+     owner: "oneplus",
+diff --git a/sm8450-common-vendor.mk b/sm8450-common-vendor.mk
+index e85a858..079e297 100644
+--- a/sm8450-common-vendor.mk
++++ b/sm8450-common-vendor.mk
+@@ -973,11 +973,8 @@ PRODUCT_PACKAGES += \
+     vendor_lib_rfsa_adsp_libqvr_cam_dsp_driver_skel_so \
+     vendor_lib_rfsa_adsp_libqvr_dsp_driver_skel_so \
+     vendor_lib_rfsa_adsp_libscveT2T_skel_so \
+-    vendor_lib_rfsa_adsp_libtracker_6dof_skel_8250_so \
+-    vendor_lib_rfsa_adsp_libtracker_6dof_skel_8350_so \
+     vendor_lib_rfsa_adsp_libvpp_ais_networks \
+     vendor_lib_rfsa_adsp_libvpp_vqa_networks \
+-    vendor_lib_rfsa_adsp_libvpt_action_recognition \
+     com.qualcomm.qti.dpm.api@1.0 \
+     lib-imsvideocodec \
+     lib-imsvt \
+-- 
+2.43.0
+

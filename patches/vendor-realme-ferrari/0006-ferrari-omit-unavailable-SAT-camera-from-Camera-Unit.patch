@@ -1,0 +1,24 @@
+From ec4ac757826d61c01ac9967ed80d82f9a5b315ce Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Tue, 11 Aug 2026 17:21:14 +0000
+Subject: [PATCH 06/13] ferrari: omit unavailable SAT camera from Camera Unit
+ config
+
+---
+ proprietary/odm/etc/camera/config/camera_unit_config | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/proprietary/odm/etc/camera/config/camera_unit_config b/proprietary/odm/etc/camera/config/camera_unit_config
+index 758716e..8569ec1 100644
+--- a/proprietary/odm/etc/camera/config/camera_unit_config
++++ b/proprietary/odm/etc/camera/config/camera_unit_config
+@@ -1,5 +1,5 @@
+ {
+-  "camera_id_list":["0", "1", "2", "3", "4"],
++  "camera_id_list":["0", "1", "2", "3"],
+   "main_info":{
+     "version_code":"1.0.2",
+     "version_date":"20200831200000"
+-- 
+2.43.0
+

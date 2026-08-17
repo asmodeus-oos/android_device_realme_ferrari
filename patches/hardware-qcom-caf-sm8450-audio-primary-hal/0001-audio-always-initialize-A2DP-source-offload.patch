@@ -1,0 +1,30 @@
+From c8d64d765f5360c7ea98e7557e253136ce766f30 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 10 Aug 2026 10:11:36 +0000
+Subject: [PATCH] audio: always initialize A2DP source offload
+
+Change-Id: I2aa719240ec71c0332e047665af961756a2da28e
+---
+ hal/AudioDevice.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/hal/AudioDevice.cpp b/hal/AudioDevice.cpp
+index bd322a36d..92501cd75 100644
+--- a/hal/AudioDevice.cpp
++++ b/hal/AudioDevice.cpp
+@@ -1161,7 +1161,11 @@ int AudioDevice::Init(hw_device_t **device, const hw_module_t *module) {
+     }
+     audio_extn_sound_trigger_init(adev_);
+     AudioExtn::hfp_feature_init(property_get_bool("vendor.audio.feature.hfp.enable", false));
+-    AudioExtn::a2dp_source_feature_init(property_get_bool("vendor.audio.feature.a2dp_offload.enable", false));
++    // A2DP source offload must be enabled for this device: the QTI BT audio path
++    // (btaudio_offload_if.so) requires the pre-init + reconfig callback. The
++    // vendor.audio.feature.a2dp_offload.enable property cannot be relied upon
++    // here (property loading/SELinux drops it), so force it on.
++    AudioExtn::a2dp_source_feature_init(true);
+ 
+     AudioExtn::audio_extn_fm_init();
+     AudioExtn::audio_extn_kpi_optimize_feature_init(
+-- 
+2.43.0
+
