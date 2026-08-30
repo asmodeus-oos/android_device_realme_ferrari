@@ -11,15 +11,14 @@ diff --git a/Android.bp b/Android.bp
 index ddbae3e..cc9451b 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -5091,7 +5091,7 @@ cc_prebuilt_library_shared {
-             ],
-             shared_libs: [
-                 "liblog",
--                "libc",
-+                "libutils",
-                 "libcutils",
-                 "libhidlbase",
-                 "libutils",
+@@ -18645,6 +18645,7 @@ cc_prebuilt_library_shared {
+ cc_prebuilt_library_shared {
+     name: "libwfdmmsrc_system",
+     owner: "oneplus",
++    allow_undefined_symbols: true,
+     strip: {
+         none: true,
+     },
 @@ -18799,7 +18799,6 @@ cc_prebuilt_library_shared {
                  "proprietary/system_ext/lib64/libwfdservice.so",
              ],
