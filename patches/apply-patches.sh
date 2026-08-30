@@ -139,11 +139,30 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
     # contain every patch in the tree. Re-applying LFS pointer diffs onto
     # smudged binaries conflicts. If the newest patch is in history, skip
     # the whole directory.
+    # If the newest patch in the directory is already in history, skip the whole directory.
     last_subject="$(patch_subject "${patches[-1]}")"
     if subject_in_history "$target" "$last_subject"; then
         echo "already applied: $repo_name (tree includes: $last_subject)"
         skipped=$((skipped + ${#patches[@]}))
         continue
+    fi
+
+    # If an earlier patch in the series is in history, start applying only after the latest applied patch.
+    latest_applied_idx=-1
+    for ((i=${#patches[@]}-1; i>=0; i--)); do
+        sub="$(patch_subject "${patches[i]}")"
+        if subject_in_history "$target" "$sub"; then
+            latest_applied_idx=$i
+            break
+        fi
+    done
+
+    if [ "$latest_applied_idx" -ge 0 ]; then
+        for ((i=0; i<=latest_applied_idx; i++)); do
+            echo "already applied in base tree: $repo_name/$(basename "${patches[i]}")"
+            skipped=$((skipped + 1))
+        done
+        patches=("${patches[@]:$((latest_applied_idx + 1))}")
     fi
 
     for patch in "${patches[@]}"; do
@@ -166,7 +185,7 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
             echo "applied: $repo_name/$name"
             applied=$((applied + 1))
         else
-            if [ -f "$target/.git/shallow" ] && grep -q "GIT binary patch" "$patch"; then
+            if [ -f "$target/.git/shallow" ] && { grep -q "git-lfs" "$patch" || grep -q "GIT binary patch" "$patch"; }; then
                 echo "already present in shallow tree: $repo_name/$name"
                 skipped=$((skipped + 1))
             else
