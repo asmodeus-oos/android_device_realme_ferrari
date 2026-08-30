@@ -1074,12 +1074,16 @@ odm/lib64/libVDExternal.so
 odm/lib64/libVDPostureDetection.so
 odm/lib64/libVDSuperPhotoAPI.so;FIX_SONAME
 odm/lib64/libVDUpScale.so
+odm/lib64/libUpScale.so;FIX_SONAME
 odm/lib64/libVideoEnhance.so
 odm/lib64/libWaterMark.so
 odm/lib64/libWaterMode.so
 odm/lib64/libXDocProcessSDK.so
 odm/lib64/libYTCommon.so
 odm/lib64/lib_rectify.so
+odm/lib64/liboplus-uah-client.so
+odm/lib64/libuahcore.so
+odm/etc/uah/uahconfig.pb
 odm/lib64/libaiboost.so
 odm/lib64/libaiboost_hexagon.so
 odm/lib64/libaisal.so

@@ -283,10 +283,17 @@ blob_fixups: blob_fixups_user_type = {
             replacement=b'\x09\x00\x00\x14',
         ),
     (
+        'odm/lib64/libUpScale.so',
         'system_ext/lib64/libSloganJni.oplus.so',
         'system_ext/lib64/liblivephoto.frc.jni.so',
     ): blob_fixup()
         .fix_soname(),
+    (
+        'odm/lib64/liboplus-uah-client.so',
+        'odm/lib64/libuahcore.so',
+    ): blob_fixup()
+        .replace_needed('vendor.oplus.hardware.urcc-V1-ndk_platform.so', 'vendor.oplus.hardware.urcc-V1-ndk.so')
+        .replace_needed('libprotobuf-cpp-lite-3.9.1.so', 'libprotobuf-cpp-lite-21.7.so'),
 }  # fmt: skip
 
 module = ExtractUtilsModule(
