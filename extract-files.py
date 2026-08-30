@@ -282,7 +282,11 @@ blob_fixups: blob_fixups_user_type = {
             expected=b'\xf4\x02\x15\x8b',
             replacement=b'\x09\x00\x00\x14',
         ),
-
+    (
+        'system_ext/lib64/libSloganJni.oplus.so',
+        'system_ext/lib64/liblivephoto.frc.jni.so',
+    ): blob_fixup()
+        .fix_soname(),
 }  # fmt: skip
 
 module = ExtractUtilsModule(
