@@ -1431,6 +1431,8 @@ system_ext/lib64/libSloganJni.oplus.so;FIX_SONAME
 system_ext/lib64/liboplusHeifDecoderImpl.so
 system_ext/lib64/liboplus_10bitHeif.so
 system_ext/lib64/liboplus_heifconverter.so
+system/lib64/liboplusmmdebug.so:system_ext/lib64/liboplusmmdebug.so
+system/lib/liboplusmmdebug.so:system_ext/lib/liboplusmmdebug.so
 system_ext/lib64/libpenguin_impl.so
 system_ext/lib64/vendor.oplus.hardware.camera.slogan-V1-ndk_platform.so
 system_ext/lib64/vendor.oplus.hardware.camera.slogan@1.0.so
