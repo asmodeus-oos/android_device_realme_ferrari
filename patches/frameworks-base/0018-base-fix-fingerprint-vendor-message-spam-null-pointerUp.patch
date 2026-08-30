@@ -1,0 +1,85 @@
+From 5f776549310632053ed2b039d42edd4e1b358317 Mon Sep 17 00:00:00 2001
+From: asmodeus-oos <mohamed20020093@gmail.com>
+Date: Sun, 30 Aug 2026 19:28:20 +0000
+Subject: [PATCH] base: fix fingerprint vendor message spam, null pointerUp
+ race condition, and zero vibration pattern error
+
+---
+ .../fingerprint/FingerprintManager.java       |  1 +
+ .../fingerprint/aidl/FingerprintProvider.java |  6 +++++
+ .../server/notification/VibratorHelper.java   | 23 +++++++++++++++----
+ 3 files changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/hardware/fingerprint/FingerprintManager.java b/core/java/android/hardware/fingerprint/FingerprintManager.java
+index 3b865ec0e..5919c2874 100644
+--- a/core/java/android/hardware/fingerprint/FingerprintManager.java
++++ b/core/java/android/hardware/fingerprint/FingerprintManager.java
+@@ -1576,6 +1576,7 @@ public class FingerprintManager implements BiometricAuthenticator, BiometricFing
+                 if (vendorCode < msgArray.length && !msgArray[vendorCode].isEmpty()) {
+                     return msgArray[vendorCode];
+                 }
++                return null;
+             }
+         }
+         Slog.w(TAG, "Invalid acquired message: " + acquireInfo + ", " + vendorCode);
+diff --git a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
+index 5c30a2fe2..a2b289969 100644
+--- a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
++++ b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
+@@ -783,6 +783,9 @@ public class FingerprintProvider implements IBinder.DeathRecipient, ServiceProvi
+         }
+         mFingerprintSensors.get(sensorId).getScheduler().getCurrentClientIfMatches(
+                 requestId, (client) -> {
++                    if (client == null) {
++                        return;
++                    }
+                     if (!(client instanceof Udfps)) {
+                         Slog.e(getTag(), "onPointerUp received during client: " + client);
+                         return;
+@@ -796,6 +799,9 @@ public class FingerprintProvider implements IBinder.DeathRecipient, ServiceProvi
+             int sensorId) {
+         mFingerprintSensors.get(sensorId).getScheduler().getCurrentClientIfMatches(
+                 requestId, (client) -> {
++                    if (client == null) {
++                        return;
++                    }
+                     if (!(client instanceof Udfps)) {
+                         Slog.e(getTag(), "onUdfpsUiEvent received during client: " + client);
+                         return;
+diff --git a/services/core/java/com/android/server/notification/VibratorHelper.java b/services/core/java/com/android/server/notification/VibratorHelper.java
+index 20bea4a8d..57d0b6bce 100644
+--- a/services/core/java/com/android/server/notification/VibratorHelper.java
++++ b/services/core/java/com/android/server/notification/VibratorHelper.java
+@@ -77,11 +77,24 @@ public final class VibratorHelper {
+     public static VibrationEffect createWaveformVibration(@Nullable long[] pattern,
+             boolean insistent) {
+         try {
+-            if (pattern != null) {
+-            	if (pattern.length == 1) {
+-            		return VibrationEffect.createOneShot(pattern[0], VibrationEffect.DEFAULT_AMPLITUDE);
+-            	} else {
+-                	return VibrationEffect.createWaveform(pattern, /* repeat= */ insistent ? 0 : -1);
++            if (pattern != null && pattern.length > 0) {
++                if (pattern.length == 1) {
++                    if (pattern[0] <= 0) {
++                        return null;
++                    }
++                    return VibrationEffect.createOneShot(pattern[0], VibrationEffect.DEFAULT_AMPLITUDE);
++                } else {
++                    boolean hasNonZero = false;
++                    for (long timing : pattern) {
++                        if (timing > 0) {
++                            hasNonZero = true;
++                            break;
++                        }
++                    }
++                    if (!hasNonZero) {
++                        return null;
++                    }
++                    return VibrationEffect.createWaveform(pattern, /* repeat= */ insistent ? 0 : -1);
+                 }
+             }
+         } catch (IllegalArgumentException e) {
+-- 
+2.43.0
+
