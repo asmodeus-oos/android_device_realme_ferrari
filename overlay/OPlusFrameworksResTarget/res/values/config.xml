@@ -404,4 +404,29 @@
         <item>114</item>  <!-- <item>sensorRadius</item> -->
     </integer-array>
 
+    <!-- Fast, crisp haptic feedback for virtual keyboard keys (5ms tight click) -->
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>5</item>
+    </integer-array>
+
+    <!-- Refined long-press confirmation feedback (8ms) -->
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>8</item>
+    </integer-array>
+
+    <!-- Tactile micro-ticks when dragging text selection handles and cursor -->
+    <bool name="config_enableHapticTextHandle">true</bool>
+
+    <!-- Expose granular amplitude scaling to keyboards (e.g. GBoard vibration slider) -->
+    <bool name="config_keyboardVibrationSupported">true</bool>
+
+    <!-- Out-of-the-box default vibration intensity levels (1=Low, 2=Medium, 3=Strong) -->
+    <integer name="config_defaultHapticFeedbackIntensity">2</integer>
+    <integer name="config_defaultNotificationVibrationIntensity">2</integer>
+    <integer name="config_defaultRingVibrationIntensity">3</integer>
+    <integer name="config_defaultAlarmVibrationIntensity">3</integer>
+    <integer name="config_defaultMediaVibrationIntensity">2</integer>
+
 </resources>
