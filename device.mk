@@ -84,6 +84,9 @@ $(call inherit-product, device/oneplus/sm8450-common/common.mk)
 # Inherit from the proprietary files makefile.
 $(call inherit-product, vendor/realme/ferrari/ferrari-vendor.mk)
 
+# Inherit from vendor_oplus_camera if present
+$(call inherit-product-if-exists, vendor/oplus/camera/opluscamera.mk)
+
 # Stock OPlusCamera integration
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/camera/media_profiles_vendor.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_vendor.xml \

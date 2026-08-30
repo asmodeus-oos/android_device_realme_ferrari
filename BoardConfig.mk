@@ -40,10 +40,10 @@ SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += \
 SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += \
     $(DEVICE_PATH)/sepolicy/public
 
-# pixel-style's com.google.android.webapp uses prefer+overrides to steal the
-# bootclasspath WebApp apex from AOSP. The last booting 12.0 image shipped
-# com.android.webapp.capex; keep that on ferrari.
-SOONG_CONFIG_NAMESPACES += evo_ferrari
-SOONG_CONFIG_evo_ferrari += disable_google_webapp
-SOONG_CONFIG_evo_ferrari_disable_google_webapp := true
-$(call soong_config_set_bool,evo_ferrari,disable_google_webapp,true)
+# VoltageOS Flags
+TARGET_BOOT_ANIMATION_RES := 1440
+TARGET_USES_OPLUS_TOUCH := true
+TARGET_CAMERA_NEEDS_CLIENT_INFO_LIB_OPLUS := true
+
+BUILD_BROKEN_VENDOR_PROPERTY_NAMESPACE := true
+BUILD_BROKEN_TREBLE_SYSPROP_NEVERALLOW := true

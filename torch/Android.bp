@@ -1,0 +1,6 @@
+cc_library_static {
+    name: "libferrari_torch_ext",
+    srcs: ["torch_strength_ext.cpp"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+    shared_libs: ["liblog"],
+}

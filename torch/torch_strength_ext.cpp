@@ -1,0 +1,150 @@
+/*
+ * ferrari: torch strength extension for the camera service.
+ *
+ * The vendor CamX HAL cannot drive flashlight strength (its flash capability
+ * query is unimplemented), so the camera service reports a single strength
+ * level to all clients. This lib overrides the LibreMobileOS weak-symbol
+ * torch strength extension hooks and applies levels by writing the torch
+ * current (mA) directly to the led:torch_0/led:torch_1 brightness nodes
+ * (the qti flash driver interprets LED brightness as current in mA).
+ *
+ * Linked into libcameraservice via
+ *   $(call soong_config_set,libcameraservice,ext_lib,libferrari_torch_ext)
+ */
+
+#include <stdint.h>
+
+#include <chrono>
+#include <condition_variable>
+#include <cstdio>
+#include <cstring>
+#include <errno.h>
+#include <fcntl.h>
+#include <log/log.h>
+#include <mutex>
+#include <thread>
+#include <unistd.h>
+
+namespace {
+
+constexpr int32_t kMaxLevel = 25;
+// Torch current (mA) per LED for levels 1..25. The pm8350c flash driver
+// accepts up to 500 mA (DT qcom,max-current-ma); stock torch default is
+// 195 mA, so levels above 195 are an overdrive trade-off.
+constexpr int32_t kTorchLevelsMa[kMaxLevel] = {
+    20,  30,  40,  50,  60,  70,  80,  90,  100, 115,
+    130, 145, 160, 175, 190, 205, 220, 240, 260, 280,
+    300, 325, 350, 375, 400,
+};
+
+const char* const kTorchNodes[] = {
+    "/sys/class/leds/led:torch_0/brightness",
+    "/sys/class/leds/led:torch_1/brightness",
+};
+
+int32_t gCurrentLevel = kMaxLevel;
+
+// The HAL re-applies its own default torch current asynchronously after
+// setTorchMode, so the level is re-asserted once it has settled. This runs
+// on a background worker to keep the binder call non-blocking (torch dim
+// apps change the level continuously).
+std::mutex gReapplyMutex;
+std::condition_variable gReapplyCv;
+int32_t gPendingReapply = -1;
+bool gStopReapply = false;
+
+ssize_t writeNode(const char* node, const char* buf, size_t len) {
+    int fd = open(node, O_WRONLY);
+    if (fd < 0) {
+        ALOGE("ferrari torch: open %s failed: %s", node, strerror(errno));
+        return -1;
+    }
+    ssize_t n = write(fd, buf, len);
+    if (n < 0) {
+        ALOGE("ferrari torch: write %s failed: %s", node, strerror(errno));
+    }
+    close(fd);
+    return n;
+}
+
+void writeLevel(int32_t level) {
+    if (level < 1 || level > kMaxLevel) {
+        ALOGE("ferrari torch: invalid level %d", level);
+        return;
+    }
+    int32_t currentMa = kTorchLevelsMa[level - 1];
+    gCurrentLevel = level;
+    char buf[16];
+    int len = snprintf(buf, sizeof(buf), "%d", currentMa);
+    for (const char* node : kTorchNodes) {
+        ssize_t n = writeNode(node, buf, len);
+        ALOGI("ferrari torch: write %s = %s (level %d) -> %zd", node, buf, level, n);
+    }
+}
+
+void reapplyWorker() {
+    std::unique_lock<std::mutex> lock(gReapplyMutex);
+    while (true) {
+        gReapplyCv.wait(lock, [] { return gStopReapply || gPendingReapply > 0; });
+        if (gStopReapply) {
+            return;
+        }
+        // Refresh the window on new level changes; coalesce bursts.
+        if (gReapplyCv.wait_for(lock, std::chrono::milliseconds(350),
+                                [] { return gStopReapply; })) {
+            return;
+        }
+        int32_t level = gPendingReapply;
+        gPendingReapply = -1;
+        lock.unlock();
+        writeLevel(level);
+        lock.lock();
+    }
+}
+
+void ensureReapplyWorker() {
+    static std::thread worker(reapplyWorker);
+    static std::once_flag once;
+    std::call_once(once, [&] { worker.detach(); });
+}
+
+void scheduleReapply(int32_t level) {
+    {
+        std::lock_guard<std::mutex> lock(gReapplyMutex);
+        gPendingReapply = level;
+    }
+    gReapplyCv.notify_one();
+}
+
+}  // namespace
+
+bool supportsTorchStrengthControlExt() {
+    return true;
+}
+
+int32_t getTorchDefaultStrengthLevelExt() {
+    return kMaxLevel;
+}
+
+int32_t getTorchMaxStrengthLevelExt() {
+    return kMaxLevel;
+}
+
+int32_t getTorchStrengthLevelExt() {
+    return gCurrentLevel;
+}
+
+void setTorchStrengthLevelExt(int32_t torchStrength, bool enabled) {
+    ALOGI("ferrari torch: setTorchStrengthLevelExt(%d, %d)", torchStrength, enabled);
+    if (enabled) {
+        ensureReapplyWorker();
+        writeLevel(torchStrength);
+        scheduleReapply(torchStrength);
+    } else {
+        gCurrentLevel = kMaxLevel;
+        {
+            std::lock_guard<std::mutex> lock(gReapplyMutex);
+            gPendingReapply = -1;
+        }
+    }
+}
