@@ -1,4 +1,4 @@
-From 25bfb68cf8ac48b617425498b1d405f6f059d83a Mon Sep 17 00:00:00 2001
+From 48cf1b8ddbdc8d9c22ae1844ff66ee3f646ebd62 Mon Sep 17 00:00:00 2001
 From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Sun, 30 Aug 2026 20:10:47 +0000
 Subject: [PATCH] hardware-oplus: support voltage libperfmgr sepolicy and add
