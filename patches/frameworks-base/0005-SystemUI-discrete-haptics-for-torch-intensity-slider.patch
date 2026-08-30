@@ -1,7 +1,7 @@
-From 1632cbb8e5f5e0ee2cf8a68736bb3154091b4429 Mon Sep 17 00:00:00 2001
+From 71d81b70b98f09002c2a05ad6094be279952db74 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 14:39:45 +0000
-Subject: [PATCH 09/15] SystemUI: discrete haptics for torch intensity slider
+Subject: [PATCH 5/7] SystemUI: discrete haptics for torch intensity slider
 
 The torch slider falls back to the continuous rumble config; give it the
 same discrete tick feel as the brightness slider, with one click per
@@ -11,7 +11,7 @@ torch strength level (25 levels -> step size 0.04).
  1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt b/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt
-index 8cda784a6b99..8bcda0faf619 100644
+index 8cda784a6..8bcda0faf 100644
 --- a/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt
 +++ b/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt
 @@ -149,7 +149,15 @@ fun VerticalFlashlightSlider(

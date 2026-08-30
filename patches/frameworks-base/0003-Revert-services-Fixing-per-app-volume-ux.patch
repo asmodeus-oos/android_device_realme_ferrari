@@ -1,7 +1,7 @@
-From 5927bc814a0b53569000fd1d4eef0e302ff744f6 Mon Sep 17 00:00:00 2001
+From c34ad2180fa5d0298c6bf8ee3541acb7efd4b1b4 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 17:24:35 +0000
-Subject: [PATCH 05/15] Revert "services: Fixing per-app volume ux"
+Subject: [PATCH 3/7] Revert "services: Fixing per-app volume ux"
 
 This reverts commit 6a9eabc964c513616da02ed780f531071a10d0bd.
 ---
@@ -9,10 +9,10 @@ This reverts commit 6a9eabc964c513616da02ed780f531071a10d0bd.
  1 file changed, 30 deletions(-)
 
 diff --git a/services/core/java/com/android/server/audio/AudioService.java b/services/core/java/com/android/server/audio/AudioService.java
-index cad3065678d1..7f9555c7713c 100644
+index 0371126bd..9fc81bf1b 100644
 --- a/services/core/java/com/android/server/audio/AudioService.java
 +++ b/services/core/java/com/android/server/audio/AudioService.java
-@@ -162,7 +162,6 @@ import android.hardware.hdmi.HdmiTvClient;
+@@ -163,7 +163,6 @@ import android.hardware.hdmi.HdmiTvClient;
  import android.hardware.input.InputManager;
  import android.hardware.usb.UsbManager;
  import android.hidl.manager.V1_0.IServiceManager;
@@ -20,7 +20,7 @@ index cad3065678d1..7f9555c7713c 100644
  import android.media.AudioAttributes;
  import android.media.AudioAttributes.AttributeSystemUsage;
  import android.media.AudioDescriptor;
-@@ -424,7 +423,6 @@ public class AudioService extends IAudioService.Stub
+@@ -425,7 +424,6 @@ public class AudioService extends IAudioService.Stub
  
      final Context mContext;
      private final ContentResolver mContentResolver;
@@ -28,7 +28,7 @@ index cad3065678d1..7f9555c7713c 100644
      private final AppOpsManager mAppOps;
  
      /** do not use directly, use getMediaSessionManager() which handles lazy initialization */
-@@ -3578,9 +3576,6 @@ public class AudioService extends IAudioService.Stub
+@@ -3601,9 +3599,6 @@ public class AudioService extends IAudioService.Stub
  
          updateMasterBalance(cr);
  
@@ -38,7 +38,7 @@ index cad3065678d1..7f9555c7713c 100644
          // Each stream will read its own persisted settings
  
          // Broadcast the sticky intents
-@@ -12159,8 +12154,6 @@ public class AudioService extends IAudioService.Stub
+@@ -12209,8 +12204,6 @@ public class AudioService extends IAudioService.Stub
                      Settings.System.MASTER_MONO), false, this, UserHandle.USER_ALL);
              mContentResolver.registerContentObserver(Settings.System.getUriFor(
                      Settings.System.MASTER_BALANCE), false, this, UserHandle.USER_ALL);
@@ -47,7 +47,7 @@ index cad3065678d1..7f9555c7713c 100644
  
              mEncodedSurroundMode = mSettings.getGlobalInt(
                      mContentResolver, Settings.Global.ENCODED_SURROUND_OUTPUT,
-@@ -12194,7 +12187,6 @@ public class AudioService extends IAudioService.Stub
+@@ -12244,7 +12237,6 @@ public class AudioService extends IAudioService.Stub
                  readDockAudioSettings(mContentResolver);
                  updateMasterMono(mContentResolver);
                  updateMasterBalance(mContentResolver);
@@ -55,7 +55,7 @@ index cad3065678d1..7f9555c7713c 100644
              }
  
              synchronized (mSurroundLock) {
-@@ -12207,17 +12199,6 @@ public class AudioService extends IAudioService.Stub
+@@ -12257,17 +12249,6 @@ public class AudioService extends IAudioService.Stub
              }
          }
  
@@ -73,7 +73,7 @@ index cad3065678d1..7f9555c7713c 100644
          @GuardedBy("mSurroundLock")
          private void updateEncodedSurroundOutput() {
              int newSurroundMode = mSettings.getGlobalInt(
-@@ -12236,17 +12217,6 @@ public class AudioService extends IAudioService.Stub
+@@ -12286,17 +12267,6 @@ public class AudioService extends IAudioService.Stub
          }
      }
  

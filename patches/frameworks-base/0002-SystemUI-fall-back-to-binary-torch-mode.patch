@@ -1,7 +1,7 @@
-From c2ffe1e6224f93d2b5d514a7c92097c767f6a626 Mon Sep 17 00:00:00 2001
+From eb5d03b41ba7405fa5dcb248cb782ebce457d995 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 16:35:41 +0000
-Subject: [PATCH 03/15] SystemUI: fall back to binary torch mode
+Subject: [PATCH 2/7] SystemUI: fall back to binary torch mode
 
 ---
  .../data/repository/FlashlightRepository.kt   | 19 +++++++++++++------
@@ -9,10 +9,10 @@ Subject: [PATCH 03/15] SystemUI: fall back to binary torch mode
  2 files changed, 21 insertions(+), 7 deletions(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt b/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt
-index 918829ec921f..c6da6b9bd3be 100644
+index cb05c5681..89b359f25 100644
 --- a/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt
 +++ b/packages/SystemUI/src/com/android/systemui/flashlight/data/repository/FlashlightRepository.kt
-@@ -394,12 +394,19 @@ constructor(
+@@ -378,12 +378,19 @@ constructor(
              try {
                  if (enabled != currentState.enabled) {
                      if (currentFlashlightInfo.hasAdjustableLevels && enabled) {
@@ -39,10 +39,10 @@ index 918829ec921f..c6da6b9bd3be 100644
                          cameraManager.setTorchMode(currentFlashlightInfo.cameraId, enabled)
                      }
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java
-index ad5a1312a6d1..1dd20b6f62e7 100644
+index 39ffd029d..98dfeeacc 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/FlashlightControllerImpl.java
-@@ -181,7 +181,14 @@ public class FlashlightControllerImpl implements FlashlightController {
+@@ -186,7 +186,14 @@ public class FlashlightControllerImpl implements FlashlightController {
                                  int level = (mCurrentLevel > 0) ? mCurrentLevel : mDefaultLevel;
                                  level = Math.max(1, Math.min(level, mMaxLevel));
                                  if (DEBUG) Log.d(TAG, "Turning on torch with level " + level);

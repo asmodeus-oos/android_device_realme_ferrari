@@ -1,7 +1,7 @@
-From 5f776549310632053ed2b039d42edd4e1b358317 Mon Sep 17 00:00:00 2001
+From b11ed0624390f7f71a0b8012cf88a623f8602ec1 Mon Sep 17 00:00:00 2001
 From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Sun, 30 Aug 2026 19:28:20 +0000
-Subject: [PATCH] base: fix fingerprint vendor message spam, null pointerUp
+Subject: [PATCH 7/7] base: fix fingerprint vendor message spam, null pointerUp
  race condition, and zero vibration pattern error
 
 ---

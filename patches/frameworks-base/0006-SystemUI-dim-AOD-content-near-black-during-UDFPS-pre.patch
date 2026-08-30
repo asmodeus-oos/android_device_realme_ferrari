@@ -1,7 +1,7 @@
-From 8176b49dc19167ded60420ecc96b58bbdf703035 Mon Sep 17 00:00:00 2001
+From 1872054cce0e291ca5e02500f903831058cb2d69 Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Sat, 8 Aug 2026 15:18:51 +0000
-Subject: [PATCH 10/15] SystemUI: dim AOD content near-black during UDFPS press
+Subject: [PATCH 6/7] SystemUI: dim AOD content near-black during UDFPS press
 
 While dozing the panel luminance comes from the AOD (LP1) mode, not from
 the backlight value, so the brightness LUT is not calibrated for it and
@@ -12,7 +12,7 @@ near-black dim layer during the fingerprint press instead.
  1 file changed, 24 insertions(+), 6 deletions(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
-index f5cdbfaeaf3d..4e256c329037 100644
+index f46ea8f74..70065cdaf 100644
 --- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
 +++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
 @@ -40,6 +40,8 @@ import kotlinx.coroutines.launch

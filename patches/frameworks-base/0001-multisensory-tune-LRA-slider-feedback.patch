@@ -1,14 +1,14 @@
-From 5eb349c0c51f80b086c57c19ab2b64828b489c74 Mon Sep 17 00:00:00 2001
+From f34d2ae4b4a4512d84de5a3e87cf564839e4a1fa Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Wed, 5 Aug 2026 14:15:54 +0000
-Subject: [PATCH 01/15] multisensory: tune LRA slider feedback
+Subject: [PATCH 1/7] multisensory: tune LRA slider feedback
 
 ---
  .../repository/haptics/MultisensoryComposedEffect.java     | 7 +++++--
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java b/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java
-index 0b9861ad1549..e679e01b3856 100644
+index 0b9861ad1..e679e01b3 100644
 --- a/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java
 +++ b/services/core/java/com/android/server/multisensory/repository/haptics/MultisensoryComposedEffect.java
 @@ -204,8 +204,11 @@ public class MultisensoryComposedEffect implements MultisensoryHapticEffect {
