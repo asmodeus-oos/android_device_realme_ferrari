@@ -146,10 +146,10 @@ blob_fixups: blob_fixups_user_type = {
     'vendor/etc/libnfc-nxp.conf': blob_fixup()
         .regex_replace('(NXPLOG_.*_LOGLEVEL)=0x03', '\\1=0x02')
         .regex_replace('NFC_DEBUG_ENABLED=1', 'NFC_DEBUG_ENABLED=0'),
-    (
-        'vendor/lib64/libmidasserviceintf_aidl.so',
-        'odm/bin/hw/vendor.oplus.hardware.cammidasservice-V1-service',
-    ): blob_fixup()
+    'odm/bin/hw/vendor.oplus.hardware.cammidasservice-V1-service': blob_fixup()
+        .replace_needed('android.frameworks.stats-V1-ndk_platform.so', 'android.frameworks.stats-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so', 'vendor.oplus.hardware.cammidasservice-V1-ndk.so'),
+    'vendor/lib64/libmidasserviceintf_aidl.so': blob_fixup()
         .replace_needed('android.frameworks.stats-V1-ndk_platform.so', 'android.frameworks.stats-V1-ndk.so'),
     (
         'odm/lib64/vendor.oplus.hardware.cameraextension-V1-service-impl.so',
@@ -247,10 +247,7 @@ blob_fixups: blob_fixups_user_type = {
             expected=b'\xf4\x02\x15\x8b',
             replacement=b'\x09\x00\x00\x14',
         ),
-    'odm/lib64/liboplus-uah-client.so': blob_fixup()
-        .replace_needed('vendor.oplus.hardware.urcc-V1-ndk_platform.so', 'vendor.oplus.hardware.urcc-V1-ndk.so'),
-    'odm/lib64/liboplus-uah-client.so': blob_fixup()
-        .replace_needed('vendor.oplus.hardware.urcc-V1-ndk_platform.so', 'vendor.oplus.hardware.urcc-V1-ndk.so'),
+
 }  # fmt: skip
 
 module = ExtractUtilsModule(

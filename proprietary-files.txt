@@ -276,7 +276,6 @@ odm/etc/init/vendor.oplus.hardware.cammidasservice-V1-service.rc
 odm/etc/vintf/manifest/manifest_oplus_cammidasservice_aidl.xml
 odm/etc/vintf/manifest/manifest_oplus_sendextcamcmd.xml
 odm/lib64/camera/components/com.oplus.node.sstabphoto.so
-vendor/lib64/vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so
 odm/etc/camera/3dphoto/color_depth_inpaint.dlc
 odm/etc/camera/3dphoto/midas_small_ver9_fp16_gpu.dlc
 odm/etc/camera/aicolor/duallut_background.bmp
@@ -1155,7 +1154,6 @@ odm/lib64/libhyperlapse.so
 odm/lib64/libmotionblur.so
 odm/lib64/libmpbase.so
 odm/lib64/libop-ai-beauty-faceretouch-cn.so
-odm/lib64/liboplus-uah-client.so
 odm/lib64/liboptical_zoom_dc.so
 odm/lib64/liboptical_zoom_vs.so
 odm/lib64/libormshalclient.so
@@ -1181,10 +1179,8 @@ odm/lib64/libtriplecam_optical_zoom_control.so
 odm/lib64/libtriplecam_video_optical_zoom.so
 odm/lib64/libwatermark_photo.so
 odm/lib64/vendor.oplus.hardware.cameraextension-V1-service-impl.so
-odm/lib64/vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so
 odm/lib64/vendor.oplus.hardware.orms@1.0.so
 odm/lib64/vendor.oplus.hardware.sendextcamcmd-V1-service-impl.so
-odm/lib64/vendor.oplus.hardware.sendextcamcmd-V2-ndk.so
 vendor/bin/hw/vendor.qti.camera.provider@2.7-service_64
 vendor/etc/init/vendor.qti.camera.provider@2.7-service_64.rc
 vendor/lib64/camera/components/com.arcsoft.node.eisv2.so
@@ -1372,9 +1368,7 @@ vendor/lib64/libsynx.so
 vendor/lib64/libtfestriping.so
 vendor/lib64/libthreadutils.so
 vendor/lib64/libubifocus.so
-vendor/lib64/vendor.oplus.hardware.cameraextension-V1-ndk_platform.so
 vendor/lib64/vendor.oplus.hardware.cammidasservice@1.0.so
-vendor/lib64/vendor.oplus.hardware.sendextcamcmd-V2-ndk_platform.so
 vendor/lib64/vendor.qti.hardware.camera.aon@1.0-service-impl.so
 vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
 
@@ -1541,7 +1535,6 @@ odm/lib64/hw/fingerprint.goodix_G7.default.so
 odm/lib64/anc.hal.so
 odm/lib64/libTeeClient.so
 odm/lib64/libgf_hal_G7.so
-odm/lib64/vendor.oplus.hardware.commondcs-V1-ndk_platform.so
 odm/vendor/firmware/goodixfp.b00
 odm/vendor/firmware/goodixfp.b01
 odm/vendor/firmware/goodixfp.b02
