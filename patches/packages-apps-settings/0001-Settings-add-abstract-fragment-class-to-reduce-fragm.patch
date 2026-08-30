@@ -1,7 +1,7 @@
-From e1e8080efdcd72aecde97ed679522fae494c77d6 Mon Sep 17 00:00:00 2001
+From 36fbe27a2e99a4378023bcfe4b4f5eb635739180 Mon Sep 17 00:00:00 2001
 From: rmp22 <195054967+rmp22@users.noreply.github.com>
 Date: Thu, 11 Sep 2025 09:52:36 +0900
-Subject: [PATCH 1/4] Settings: add abstract fragment class to reduce fragments
+Subject: [PATCH] Settings: add abstract fragment class to reduce fragments
  boilerplate
 
 Change-Id: I7abc1f6a59419eecb5c6616a66e12e524d2af1a1
@@ -17,7 +17,7 @@ Signed-off-by: Ghosuto <clash.raja10@gmail.com>
 
 diff --git a/src/com/android/settings/preferences/BasePreferenceFragment.kt b/src/com/android/settings/preferences/BasePreferenceFragment.kt
 new file mode 100644
-index 00000000000..5c67fc490cb
+index 0000000..5c67fc4
 --- /dev/null
 +++ b/src/com/android/settings/preferences/BasePreferenceFragment.kt
 @@ -0,0 +1,39 @@
@@ -62,7 +62,7 @@ index 00000000000..5c67fc490cb
 +}
 diff --git a/src/com/android/settings/search/SearchIndexProviderHolder.java b/src/com/android/settings/search/SearchIndexProviderHolder.java
 new file mode 100644
-index 00000000000..e9b37d9234a
+index 0000000..e9b37d9
 --- /dev/null
 +++ b/src/com/android/settings/search/SearchIndexProviderHolder.java
 @@ -0,0 +1,5 @@
