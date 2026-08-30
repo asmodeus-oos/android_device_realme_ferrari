@@ -86,9 +86,9 @@ subject_in_history() {
 
 for repo_dir in "$SCRIPT_DIR"/*/; do
     repo_name="$(basename "$repo_dir")"
-    # Overlays / non-git trees: handled after the git-am loop.
+    # Overlays / non-git trees / ROM-specific trees: handled after the git-am loop.
     case "$repo_name" in
-        vendor-oneplus-aconfig|opluscamera|camera-unit) continue ;;
+        vendor-oneplus-aconfig|opluscamera|camera-unit|packages-apps-evolver|vendor-lineage) continue ;;
     esac
     target="$ROOT/${REPO_PATHS[$repo_name]:-$repo_name}"
 
