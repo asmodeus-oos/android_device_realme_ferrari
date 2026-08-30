@@ -1,5 +1,5 @@
 From ec4ac757826d61c01ac9967ed80d82f9a5b315ce Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Tue, 11 Aug 2026 17:21:14 +0000
 Subject: [PATCH 06/13] ferrari: omit unavailable SAT camera from Camera Unit
  config

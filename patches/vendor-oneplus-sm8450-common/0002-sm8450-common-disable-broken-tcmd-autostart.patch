@@ -1,5 +1,5 @@
 From 1ca02c47e9e7df9a573ca519a867b4429e53ecfd Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Mon, 10 Aug 2026 10:11:36 +0000
 Subject: [PATCH 2/4] sm8450-common: disable broken tcmd autostart
 

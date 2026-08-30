@@ -1,5 +1,5 @@
 From 37a7acdefa53b875c5efa62d13b9d5621bafacbe Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Fri, 14 Aug 2026 16:32:17 +0000
 Subject: [PATCH 3/3] Evolver: always force-stop spoofed packages on toggle
 

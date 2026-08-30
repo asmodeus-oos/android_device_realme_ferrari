@@ -1,5 +1,5 @@
 From 846995389733e7f6cc8eea70abd0f0c1451552b9 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Fri, 14 Aug 2026 16:09:42 +0000
 Subject: [PATCH 3/4] sm8450-common: drop unused QVR and wrong-SoC ADSP blobs
 

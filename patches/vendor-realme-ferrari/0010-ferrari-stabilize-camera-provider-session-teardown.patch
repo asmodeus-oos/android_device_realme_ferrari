@@ -1,5 +1,5 @@
 From 79e69311c0ed254554474af6c67bb9a5c57bae28 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Tue, 11 Aug 2026 20:36:44 +0000
 Subject: [PATCH 10/13] ferrari: stabilize camera provider session teardown
 

@@ -1,5 +1,5 @@
 From 7e6244b33130ca83b8a66dddd0335542ec76e5c5 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Thu, 6 Aug 2026 19:58:33 +0000
 Subject: [PATCH 4/7] SystemUI: volume sliders: use discrete haptics instead of
  continuous buzz

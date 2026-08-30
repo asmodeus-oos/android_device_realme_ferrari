@@ -1,5 +1,5 @@
 From 0da38de37e8dd06b84fad2717684537536b9b366 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Mon, 17 Aug 2026 16:43:12 +0000
 Subject: [PATCH 5/5] sdm: ignore zero-alpha UDFPS dim for fingerprint_mask
 

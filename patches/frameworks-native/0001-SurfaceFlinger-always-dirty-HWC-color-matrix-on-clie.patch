@@ -1,5 +1,5 @@
 From 1de26bd4e79a21a49cf97a8428a2af8fc1246990 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Wed, 12 Aug 2026 17:33:12 +0000
 Subject: [PATCH] SurfaceFlinger: always dirty HWC color matrix on client
  updates

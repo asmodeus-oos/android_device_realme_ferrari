@@ -1,5 +1,5 @@
 From f063d3f4fdac279f778cabaa4c04a7b08799cb49 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
+From: asmodeus-oos <mohamed20020093@gmail.com>
 Date: Fri, 14 Aug 2026 16:09:47 +0000
 Subject: [PATCH 4/4] sm8450-common: stop packaging unused ADSP blobs
 
