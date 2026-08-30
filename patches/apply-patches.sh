@@ -154,6 +154,11 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
             skipped=$((skipped + 1))
             continue
         fi
+        if git -C "$target" apply -R --check "$patch" >/dev/null 2>&1; then
+            echo "already present in source: $repo_name/$name"
+            skipped=$((skipped + 1))
+            continue
+        fi
         # Several upstream OPLUS framework stubs use CRLF. Preserve carriage
         # returns while parsing mail patches so their context stays exact.
         if git -C "$target" am --keep-cr "$patch" \
