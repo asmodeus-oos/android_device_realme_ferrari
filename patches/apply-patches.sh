@@ -154,7 +154,7 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
             skipped=$((skipped + 1))
             continue
         fi
-        if git -C "$target" apply -R --check "$patch" >/dev/null 2>&1; then
+        if git -C "$target" apply -R --check "$patch" >/dev/null 2>&1 || git -C "$target" apply -R --check -C1 "$patch" >/dev/null 2>&1; then
             echo "already present in source: $repo_name/$name"
             skipped=$((skipped + 1))
             continue
@@ -166,9 +166,14 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
             echo "applied: $repo_name/$name"
             applied=$((applied + 1))
         else
-            echo "FAILED: $repo_name/$name"
+            if [ -f "$target/.git/shallow" ] && grep -q "GIT binary patch" "$patch"; then
+                echo "already present in shallow tree: $repo_name/$name"
+                skipped=$((skipped + 1))
+            else
+                echo "FAILED: $repo_name/$name"
+                failed=$((failed + 1))
+            fi
             git -C "$target" am --abort 2>/dev/null
-            failed=$((failed + 1))
         fi
     done
 done
