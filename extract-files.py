@@ -12,6 +12,7 @@ from extract_utils.fixups_blob import (
 )
 from extract_utils.fixups_lib import (
     lib_fixups,
+    lib_fixups_user_type,
 )
 from extract_utils.main import (
     ExtractUtils,
@@ -31,6 +32,26 @@ namespace_imports = [
     'vendor/qcom/opensource/commonsys-intf/display',
     'vendor/qcom/opensource/commonsys/display',
 ]
+
+
+def lib_fixup_remove_ndk_platform(lib: str, partition: str, *args, **kwargs):
+    return lib.replace('-ndk_platform', '-ndk') if '-ndk_platform' in lib else None
+
+
+lib_fixups: lib_fixups_user_type = {
+    **lib_fixups,
+    (
+        'android.hardware.common-V2-ndk_platform',
+        'android.frameworks.stats-V1-ndk_platform',
+        'vendor.oplus.hardware.cammidasservice-V1-ndk_platform',
+        'vendor.oplus.hardware.commondcs-V1-ndk_platform',
+        'vendor.oplus.hardware.cameraextension-V1-ndk_platform',
+        'vendor.oplus.hardware.sendextcamcmd-V2-ndk_platform',
+        'vendor.oplus.hardware.osense.client-V1-ndk_platform',
+        'vendor.oplus.hardware.performance-V1-ndk_platform',
+        'vendor.oplus.hardware.urcc-V1-ndk_platform',
+    ): lib_fixup_remove_ndk_platform,
+}
 
 
 def blob_fixup_nop_call(
@@ -149,8 +170,16 @@ blob_fixups: blob_fixups_user_type = {
     'odm/bin/hw/vendor.oplus.hardware.cammidasservice-V1-service': blob_fixup()
         .replace_needed('android.frameworks.stats-V1-ndk_platform.so', 'android.frameworks.stats-V1-ndk.so')
         .replace_needed('vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so', 'vendor.oplus.hardware.cammidasservice-V1-ndk.so'),
+    (
+        'system_ext/lib64/vendor.oplus.hardware.camera.slogan-V1-ndk_platform.so',
+        'system_ext/lib64/libOplusSloganClient.so',
+    ): blob_fixup()
+        .replace_needed('android.hardware.common-V2-ndk_platform.so', 'android.hardware.common-V2-ndk.so'),
+    'odm/lib64/libsecurity_event_dcs.so': blob_fixup()
+        .replace_needed('vendor.oplus.hardware.commondcs-V1-ndk_platform.so', 'vendor.oplus.hardware.commondcs-V1-ndk.so'),
     'vendor/lib64/libmidasserviceintf_aidl.so': blob_fixup()
-        .replace_needed('android.frameworks.stats-V1-ndk_platform.so', 'android.frameworks.stats-V1-ndk.so'),
+        .replace_needed('android.frameworks.stats-V1-ndk_platform.so', 'android.frameworks.stats-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so', 'vendor.oplus.hardware.cammidasservice-V1-ndk.so'),
     (
         'odm/lib64/vendor.oplus.hardware.cameraextension-V1-service-impl.so',
         'odm/lib64/libextensionlayer.so',
@@ -220,10 +249,16 @@ blob_fixups: blob_fixups_user_type = {
         'vendor/lib64/com.qti.feature2.gs.sdm865.so',
     ): blob_fixup()
         .replace_needed('vendor.oplus.hardware.osense.client-V1-ndk_platform.so', 'vendor.oplus.hardware.osense.client-V1-ndk.so')
-        .replace_needed('vendor.oplus.hardware.performance-V1-ndk_platform.so', 'vendor.oplus.hardware.performance-V1-ndk.so'),
+        .replace_needed('vendor.oplus.hardware.performance-V1-ndk_platform.so', 'vendor.oplus.hardware.performance-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so', 'vendor.oplus.hardware.cammidasservice-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.commondcs-V1-ndk_platform.so', 'vendor.oplus.hardware.commondcs-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.cameraextension-V1-ndk_platform.so', 'vendor.oplus.hardware.cameraextension-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.sendextcamcmd-V2-ndk_platform.so', 'vendor.oplus.hardware.sendextcamcmd-V2-ndk.so'),
     'vendor/lib64/hw/com.qti.chi.override.so': blob_fixup()
         .replace_needed('vendor.oplus.hardware.osense.client-V1-ndk_platform.so', 'vendor.oplus.hardware.osense.client-V1-ndk.so')
         .replace_needed('vendor.oplus.hardware.performance-V1-ndk_platform.so', 'vendor.oplus.hardware.performance-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.cammidasservice-V1-ndk_platform.so', 'vendor.oplus.hardware.cammidasservice-V1-ndk.so')
+        .replace_needed('vendor.oplus.hardware.commondcs-V1-ndk_platform.so', 'vendor.oplus.hardware.commondcs-V1-ndk.so')
         # AdvancedCameraUsecase::Destroy dereferences stale stream state while
         # CameraX replaces a session. Skip clearing an already-dead stream's
         # private field and destroying its corrupt cached PrunedUsecase. The
