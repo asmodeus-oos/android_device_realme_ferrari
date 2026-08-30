@@ -40,7 +40,7 @@ declare -A REPO_PATHS=(
     [frameworks-native]="frameworks/native"
     [bionic]="bionic"
     [kernel-oneplus-sm8450]="kernel/oneplus/sm8450"
-    [vendor-lineage]="vendor/lineage"
+    [vendor-lineage]="vendor/voltage"
     [build-soong]="build/soong"
     [frameworks-av]="frameworks/av"
     [hardware-interfaces]="hardware/interfaces"
@@ -48,7 +48,7 @@ declare -A REPO_PATHS=(
     [hardware-oplus]="hardware/oplus"
     [hardware-qcom-caf-sm8450-audio-primary-hal]="hardware/qcom-caf/sm8450/audio/primary-hal"
     [hardware-qcom-caf-sm8450-display]="hardware/qcom-caf/sm8450/display"
-    [packages-apps-evolver]="packages/apps/Evolver"
+    [packages-apps-evolver]="packages/apps/Powerhub"
     [packages-apps-settings]="packages/apps/Settings"
     [vendor-oneplus-sm8450-common]="vendor/oneplus/sm8450-common"
     [vendor-realme-ferrari]="vendor/realme/ferrari"
@@ -88,7 +88,7 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
     repo_name="$(basename "$repo_dir")"
     # Overlays / non-git trees: handled after the git-am loop.
     case "$repo_name" in
-        vendor-oneplus-aconfig|opluscamera) continue ;;
+        vendor-oneplus-aconfig|opluscamera|camera-unit) continue ;;
     esac
     target="$ROOT/${REPO_PATHS[$repo_name]:-$repo_name}"
 
@@ -102,7 +102,11 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
     # After repo sync, always recreate ferrari-patches from the synced
     # manifest revision so a previous partial apply cannot block new patches.
     start_ref=""
-    if git -C "$target" rev-parse -q --verify m/cnb >/dev/null; then
+    if git -C "$target" rev-parse -q --verify m/17 >/dev/null; then
+        start_ref="m/17"
+    elif git -C "$target" rev-parse -q --verify vos/17 >/dev/null; then
+        start_ref="vos/17"
+    elif git -C "$target" rev-parse -q --verify m/cnb >/dev/null; then
         start_ref="m/cnb"
     elif git -C "$target" rev-parse -q --verify evo/cnb >/dev/null; then
         start_ref="evo/cnb"

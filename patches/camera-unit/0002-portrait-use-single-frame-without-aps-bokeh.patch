@@ -1,6 +1,6 @@
 --- a/smali/com/oplus/ocs/camera/producer/mode/PortraitMode.smali
 +++ b/smali/com/oplus/ocs/camera/producer/mode/PortraitMode.smali
-@@ -7048,6 +7048,69 @@
+@@ -8417,6 +8417,69 @@
  
      invoke-virtual {p3, p1, p4, v0, p0}, Lcom/oplus/ocs/camera/platform/PlatformDifferentiation;->photoModeSetControlEnableZsl(Lcom/oplus/ocs/camera/metadata/parameter/Parameter;Lcom/oplus/ocs/camera/common/util/CameraRequestTag;Lcom/oplus/ocs/camera/appinterface/CameraPreviewCallbackAdapter$PreviewResult;Ljava/lang/String;)V
  
@@ -67,12 +67,12 @@
 +    invoke-virtual {p1, p0, v0}, Lcom/oplus/ocs/camera/metadata/parameter/Parameter;->set(Lcom/oplus/ocs/camera/metadata/RequestKey;Ljava/lang/Object;)V
 +
 +    :cond_ferrari_stage_param
-     .line 224
+     .line 234
      iget-object p0, p4, Lcom/oplus/ocs/camera/common/util/CameraRequestTag;->mCaptureSensorModeList:[I
  
-@@ -7692,6 +7755,64 @@
+@@ -9109,6 +9172,64 @@
  
-     if-eqz p2, :cond_f
+     if-eqz p2, :cond_16
  
 +    # Ferrari: same single-frame non-bokeh capture override as updateStageParameter.
 +    if-eqz p4, :cond_ferrari_builder_tag
@@ -132,6 +132,6 @@
 +
 +    invoke-virtual {p1, p2, v4}, Lcom/oplus/ocs/camera/metadata/parameter/PreviewParameter$Builder;->set(Lcom/oplus/ocs/camera/metadata/RequestKey;Ljava/lang/Object;)Lcom/oplus/ocs/camera/metadata/parameter/Parameter$BaseBuilder;
 +
-     .line 324
+     .line 335
      sget-object p2, Lcom/oplus/ocs/camera/metadata/URequestKeys;->KEY_FILTER_TYPE:Lcom/oplus/ocs/camera/metadata/PreviewKey;
  
