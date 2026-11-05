@@ -44,7 +44,7 @@ regenerate kernel/oneplus/sm8450 HEAD~1 "$OUT/kernel-oneplus-sm8450"
 regenerate packages/apps/Evolver HEAD~2 "$OUT/packages-apps-evolver"
 regenerate packages/apps/Settings HEAD~2 "$OUT/packages-apps-settings"
 regenerate vendor/lineage HEAD~1 "$OUT/vendor-lineage"
-regenerate vendor/oneplus/sm8450-common HEAD~1 "$OUT/vendor-oneplus-sm8450-common"
+regenerate vendor/oneplus/sm8450-common e4a18f1~1 "$OUT/vendor-oneplus-sm8450-common"
 
 echo "Patches check/regeneration finished under $OUT"
 
