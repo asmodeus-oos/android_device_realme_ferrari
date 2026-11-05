@@ -1,15 +1,14 @@
-From 17d6e772a382bdf344f9e965fc6d745a0d7246f0 Mon Sep 17 00:00:00 2001
-From: Bubun Das <bubundas17@gmail.com>
-Date: Sun, 16 Aug 2026 12:00:00 +0000
+From 9e5d3684edd6e1bd1015277639159ee45cd73c96 Mon Sep 17 00:00:00 2001
+From: Mohamed Elsayed <mohamed20020093@gmail.com>
+Date: Thu, 5 Nov 2026 12:19:31 +0000
 Subject: [PATCH 1/2] Evolver: add per-app banking compatibility picker
 
-Provides Compose-based banking compatibility selector integrated with AxSandboxManager.
 ---
  res/values/evolution_strings.xml              |   7 +
  res/xml/spoofing.xml                          |   7 +
- .../BankingCompatibilitySettings.kt           | 322 ++++++++++++++++++
+ .../BankingCompatibilitySettings.kt           | 323 ++++++++++++++++++
  .../fragments/miscellaneous/Spoofing.kt       |  12 +
- 4 files changed, 348 insertions(+)
+ 4 files changed, 349 insertions(+)
  create mode 100644 src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt
 
 diff --git a/res/values/evolution_strings.xml b/res/values/evolution_strings.xml
@@ -50,14 +49,16 @@ index a4965b5..4d50e1b 100644
              android:key="pi_photos_spoof"
 diff --git a/src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt b/src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt
 new file mode 100644
-index 0000000..bb55e35
+index 0000000..88c11ac
 --- /dev/null
 +++ b/src/org/evolution/settings/fragments/miscellaneous/BankingCompatibilitySettings.kt
-@@ -0,0 +1,322 @@
+@@ -0,0 +1,323 @@
 +/*
 + * SPDX-FileCopyrightText: Evolution X
 + * SPDX-License-Identifier: Apache-2.0
 + */
++
++@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
 +
 +package org.evolution.settings.fragments.miscellaneous
 +
@@ -108,12 +109,10 @@ index 0000000..bb55e35
 +import com.android.internal.logging.nano.MetricsProto.MetricsEvent
 +import com.android.settings.R
 +import com.android.settings.SettingsPreferenceFragment
-+import com.android.settingslib.search.SearchIndexable
 +import kotlinx.coroutines.Dispatchers
 +import kotlinx.coroutines.launch
 +import kotlinx.coroutines.withContext
 +
-+@SearchIndexable
 +class BankingCompatibilitySettings : SettingsPreferenceFragment() {
 +
 +    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {}
@@ -171,9 +170,6 @@ index 0000000..bb55e35
 +        val loaded = withContext(Dispatchers.IO) {
 +            val pm = context.packageManager
 +            val installed = pm.getInstalledApplications(0)
-+            val configured = runCatching {
-+                sandboxManager?.getEnabledSpoofSettings(context.userId)
-+            }.getOrNull().orEmpty()
 +
 +            installed.mapNotNull { appInfo ->
 +                if (appInfo.packageName == context.packageName) {
@@ -185,7 +181,7 @@ index 0000000..bb55e35
 +                val isSelected = runCatching {
 +                    sandboxManager?.isSpoofSettingEnabled(
 +                        appInfo.packageName, "banking_compatibility", context.userId)
-+                }.getOrDefault(false)
++                }.getOrNull() == true
 +                BankingAppItem(
 +                    packageName = appInfo.packageName,
 +                    label = label,
@@ -218,15 +214,20 @@ index 0000000..bb55e35
 +                .padding(paddingValues)
 +                .padding(horizontal = 16.dp),
 +        ) {
-+            AppPickerHeader(
-+                activeCount = activeCount,
-+                description = stringResource(R.string.banking_compatibility_description),
-+                noneConfiguredText = stringResource(R.string.banking_compatibility_none_configured),
-+                configuredText = { count ->
-+                    context.resources.getQuantityString(
-+                        R.plurals.apps_selected, count, count)
-+                },
-+            )
++            ExpressiveHeaderCard(
++                title = stringResource(R.string.banking_compatibility_title),
++                subtitle = if (activeCount == 0)
++                    stringResource(R.string.banking_compatibility_none_configured)
++                else
++                    "$activeCount apps selected",
++            ) {
++                Icon(
++                    Icons.Default.Shield,
++                    contentDescription = null,
++                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
++                    modifier = Modifier.size(26.dp),
++                )
++            }
 +
 +            Spacer(modifier = Modifier.height(12.dp))
 +
@@ -278,16 +279,16 @@ index 0000000..bb55e35
 +                    },
 +                    enabled = activeCount > 0,
 +                ) {
-+                    Text(stringResource(R.string.action_clear))
++                    Text(stringResource(R.string.clear))
 +                }
 +            }
 +
 +            Spacer(modifier = Modifier.height(8.dp))
 +
 +            if (isLoading) {
-+                SpoofingLoadingBox(modifier = Modifier.weight(1f))
++                ExpressiveLoadingBox(modifier = Modifier.weight(1f))
 +            } else if (filteredApps.isEmpty()) {
-+                SpoofingEmptyState(
++                ExpressiveEmptyState(
 +                    icon = Icons.Default.Shield,
 +                    title = stringResource(R.string.app_spoofing_no_apps_available),
 +                    description = stringResource(R.string.banking_compatibility_empty_description),
@@ -372,8 +373,7 @@ index 0000000..bb55e35
 +    Settings.Secure.putString(
 +        resolver,
 +        TrickyStoreAppSettings.TARGET_KEY,
-+        current.joinToString("
-+"),
++        current.joinToString("\n"),
 +    )
 +}
 diff --git a/src/org/evolution/settings/fragments/miscellaneous/Spoofing.kt b/src/org/evolution/settings/fragments/miscellaneous/Spoofing.kt
