@@ -125,6 +125,13 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
 
     git -C "$target" am --abort >/dev/null 2>&1 || true
 
+    last_subject="$(patch_subject "${patches[-1]}")"
+    if subject_in_history "$target" "$last_subject"; then
+        echo "already applied: $repo_name (tree includes: $last_subject)"
+        skipped=$((skipped + ${#patches[@]}))
+        continue
+    fi
+
     start_ref=""
     case "$repo_name" in
         hardware-qcom-caf-sm8450-display|hardware-qcom-caf-sm8450-audio-primary-hal|hardware-qcom-caf-sm8450-audio-pal|hardware-qcom-caf-sm8450-audio-agm)
@@ -177,13 +184,6 @@ for repo_dir in "$SCRIPT_DIR"/*/; do
                 continue
             fi
         fi
-    fi
-
-    last_subject="$(patch_subject "${patches[-1]}")"
-    if subject_in_history "$target" "$last_subject"; then
-        echo "already applied: $repo_name (tree includes: $last_subject)"
-        skipped=$((skipped + ${#patches[@]}))
-        continue
     fi
 
     for patch in "${patches[@]}"; do
