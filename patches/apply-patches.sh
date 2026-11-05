@@ -38,7 +38,6 @@ declare -A REPO_PATHS=(
     [frameworks-base]="frameworks/base"
     [frameworks-libs-systemui]="frameworks/libs/systemui"
     [frameworks-native]="frameworks/native"
-    [hardware-interfaces]="hardware/interfaces"
     [hardware-lineage-compat]="hardware/lineage/compat"
     [hardware-oplus]="hardware/oplus"
     [hardware-qcom-caf-sm8450-audio-primary-hal]="hardware/qcom-caf/sm8450/audio/primary-hal"
