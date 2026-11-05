@@ -1,0 +1,32 @@
+From 5520f939debd84a69ad00e04ab434a4b7cb64824 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Mon, 17 Aug 2026 16:43:12 +0000
+Subject: [PATCH 2/2] sdm: ignore zero-alpha UDFPS dim for fingerprint_mask
+
+The dim layer name still matches when idle alpha is 0. Require a
+non-zero plane alpha before asserting DIM_LAYER so lockscreen HBM
+does not toggle on lock/unlock.
+---
+ composer/hwc_display.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/composer/hwc_display.cpp b/composer/hwc_display.cpp
+index 924223a91..8e76b5f90 100644
+--- a/composer/hwc_display.cpp
++++ b/composer/hwc_display.cpp
+@@ -740,7 +740,11 @@ void HWCDisplay::BuildLayerStack() {
+     // them from the layers it programs on the hardware.
+     const std::string &name = hwc_layer->GetName();
+     if (name.find(UDFPS_DIM_LAYER_NAME) != std::string::npos) {
+-      layer_stack_.flags.ofp_dim_layer_present = true;
++      // Alpha 0 still matches the layer name. Ignore it so idle lockscreen
++      // does not assert DIM_LAYER / panel HBM.
++      if (layer->plane_alpha > 0) {
++        layer_stack_.flags.ofp_dim_layer_present = true;
++      }
+     } else if (name.find(UDFPS_TOUCHED_LAYER_NAME) != std::string::npos) {
+       layer_stack_.flags.ofp_fingerpress_layer_present = true;
+     }
+-- 
+2.43.0
+

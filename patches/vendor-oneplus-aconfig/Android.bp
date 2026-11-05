@@ -1,0 +1,7 @@
+aconfig_value_set {
+    name: "aconfig_value_set-ferrari",
+    srcs: [
+        "com.android.bluetooth.flags/Android.bp",
+        "com.android.systemui.flags/Android.bp",
+    ],
+}

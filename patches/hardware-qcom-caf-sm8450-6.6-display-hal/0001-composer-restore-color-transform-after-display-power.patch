@@ -1,0 +1,51 @@
+From e9cf41a1475a5266803f003af09b954b0d14ca12 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Wed, 12 Aug 2026 17:33:12 +0000
+Subject: [PATCH 1/2] composer: restore color transform after display power-on
+
+Restoring PCC before SetDisplayState is lost when the panel powers up,
+causing a cold Night Light flash on wake. Restore after the power mode
+change instead.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+---
+ composer/hwc_display.cpp | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/composer/hwc_display.cpp b/composer/hwc_display.cpp
+index 2e5362700..924223a91 100644
+--- a/composer/hwc_display.cpp
++++ b/composer/hwc_display.cpp
+@@ -1034,7 +1034,8 @@ HWC3::Error HWCDisplay::SetPowerMode(PowerMode mode, bool teardown) {
+            current_power_mode_ == PowerMode::DOZE_SUSPEND)) {
+         return HWC3::Error::None;
+       }
+-      RestoreColorTransform();
++      // Night Light / PCC must be restored *after* SetDisplayState below.
++      // Restoring here is lost when the panel powers on (cold flash on wake).
+       state = kStateOn;
+       break;
+     case PowerMode::DOZE:
+@@ -1043,7 +1044,6 @@ HWC3::Error HWCDisplay::SetPowerMode(PowerMode mode, bool teardown) {
+            current_power_mode_ == PowerMode::DOZE_SUSPEND)) {
+         return HWC3::Error::None;
+       }
+-      RestoreColorTransform();
+       state = kStateDoze;
+       break;
+     case PowerMode::DOZE_SUSPEND:
+@@ -1059,6 +1059,11 @@ HWC3::Error HWCDisplay::SetPowerMode(PowerMode mode, bool teardown) {
+ 
+   if (error == kErrorNone) {
+     flush_on_error_ = flush_on_error;
++    // Re-apply cached color transform after the panel is actually on/doze.
++    // Doing this before SetDisplayState loses Night Light PCC on power-up.
++    if (mode == PowerMode::ON || mode == PowerMode::DOZE) {
++      RestoreColorTransform();
++    }
+   } else {
+     if (error == kErrorShutDown) {
+       shutdown_pending_ = true;
+-- 
+2.43.0
+

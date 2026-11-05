@@ -1,0 +1,337 @@
+From 7fe7054b42525f1fa59f72fd5840196cf9daba43 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Sat, 15 Aug 2026 12:00:00 +0000
+Subject: [PATCH 9/9] SystemServer: banking compatibility preset and
+ TrickyStore
+
+Sanitizes USB state, developer options, and integrates TrickyStore attestation.
+---
+ core/java/android/app/ActivityThread.java     |   4 +
+ .../app/BankingCompatibilitySpoof.java        | 101 ++++++++++++++++++
+ .../trickystore/TrickyStoreService.java       |  35 +++++-
+ .../server/am/BroadcastController.java        |  50 ++++++++-
+ .../android/server/am/BroadcastRecord.java    |  13 ++-
+ 5 files changed, 192 insertions(+), 11 deletions(-)
+ create mode 100644 core/java/android/app/BankingCompatibilitySpoof.java
+
+diff --git a/core/java/android/app/ActivityThread.java b/core/java/android/app/ActivityThread.java
+index 1e47a5393..5561321b4 100644
+--- a/core/java/android/app/ActivityThread.java
++++ b/core/java/android/app/ActivityThread.java
+@@ -8228,6 +8228,10 @@ public final class ActivityThread extends ClientTransactionHandler
+ 
+         GamePropsSpoofService.getInstance().spoofForPackage(data.appInfo.packageName);
+ 
++        // Banking preset: rewrite zygote-baked Build debug/signing fields before
++        // application code (e.g. Paytm) inspects them.
++        BankingCompatibilitySpoof.applyForPackage(data.appInfo.packageName);
++
+         PlayIntegritySpoofService pifService = PlayIntegritySpoofService.getInstance();
+         if (pifService.shouldSpoof(data.processName)) {
+             pifService.spoofBuildFields(data.processName);
+diff --git a/core/java/android/app/BankingCompatibilitySpoof.java b/core/java/android/app/BankingCompatibilitySpoof.java
+new file mode 100644
+index 000000000..c4e516c6f
+--- /dev/null
++++ b/core/java/android/app/BankingCompatibilitySpoof.java
+@@ -0,0 +1,101 @@
++/*
++ * Copyright (C) 2026 Evolution X
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package android.app;
++
++import android.os.Build;
++import android.os.Process;
++import android.os.RemoteException;
++import android.os.UserHandle;
++import android.util.Slog;
++
++import java.lang.reflect.Field;
++
++/**
++ * Client-side companion to the sandbox {@code banking_compatibility} preset.
++ *
++ * <p>System-server already spoofs developer Settings and sanitizes USB sticky
++ * broadcasts for targeted packages. Zygote still bakes real {@link Build}
++ * constants (notably {@link Build#IS_DEBUGGABLE}) into every forked app, and
++ * some payment apps also read those fields / related properties directly. When
++ * the preset is enabled for a package, rewrite the obvious debug/signing
++ * signals before application code runs. TrickyStore also treats the package as
++ * an AUTO attestation target so Keystore keygen can use the configured keybox
++ * when TEE is unprovisioned (Paytm exits otherwise).
++ *
++ * @hide
++ */
++public final class BankingCompatibilitySpoof {
++    private static final String TAG = "BankingCompatSpoof";
++
++    /** @hide */
++    public static final String PRESET = "banking_compatibility";
++
++    private static volatile boolean sEnabled;
++
++    private BankingCompatibilitySpoof() {}
++
++    /** @hide */
++    public static boolean isEnabled() {
++        return sEnabled;
++    }
++
++    /**
++     * Apply Build / property spoofs when {@code packageName} has the banking
++     * compatibility preset enabled.
++     *
++     * @hide
++     */
++    public static void applyForPackage(String packageName) {
++        if (packageName == null || Process.isIsolated()) {
++            return;
++        }
++
++        try {
++            final IActivityManager am = ActivityManager.getService();
++            if (am == null || !am.isSandboxSpoofSettingEnabled(packageName, PRESET, UserHandle.myUserId())) {
++                return;
++            }
++        } catch (RemoteException e) {
++            Slog.w(TAG, "Unable to query banking compatibility for " + packageName, e);
++            return;
++        }
++
++        sEnabled = true;
++        spoofBuildFields();
++        Slog.i(TAG, "Applied banking Build spoof for " + packageName);
++    }
++
++    private static void spoofBuildFields() {
++        setBuildField("TAGS", "release-keys");
++        setBuildField("TYPE", "user");
++        setBuildField("IS_DEBUGGABLE", false);
++        setBuildField("IS_ENG", false);
++        setBuildField("IS_USERDEBUG", false);
++        setBuildField("IS_USER", true);
++    }
++
++    private static void setBuildField(String fieldName, Object value) {
++        try {
++            Field field = Build.class.getDeclaredField(fieldName);
++            field.setAccessible(true);
++            field.set(null, value);
++            field.setAccessible(false);
++        } catch (NoSuchFieldException | IllegalAccessException e) {
++            Slog.w(TAG, "Failed to spoof Build." + fieldName, e);
++        }
++    }
++}
+diff --git a/core/java/android/security/trickystore/TrickyStoreService.java b/core/java/android/security/trickystore/TrickyStoreService.java
+index cbd5972fb..5614de5bf 100644
+--- a/core/java/android/security/trickystore/TrickyStoreService.java
++++ b/core/java/android/security/trickystore/TrickyStoreService.java
+@@ -173,6 +173,7 @@ public class TrickyStoreService {
+             "com.google.android.safetycore",
+             "com.google.android.apps.walletnfcrel",
+             "com.google.android.apps.nbu.paisa.user",
++            "net.one97.paytm",
+             // Cert generation
+             "com.revolut.revolut!",
+             // Key attestation checkers, leaf hack
+@@ -800,8 +801,8 @@ public class TrickyStoreService {
+         maybeRefreshTargets();
+         for (String pkg : packages) {
+             if (XPOSED_PACKAGES.contains(pkg)) continue;
+-            Mode mode = mPackageModes.get(pkg);
+-            if (mode == Mode.SKIP) continue;
++            Mode mode = effectiveMode(pkg);
++            if (mode == null || mode == Mode.SKIP) continue;
+             if (mode == Mode.LEAF_HACK) return true;
+             // Only AUTO needs to know the TEE state. Probing it costs a real
+             // attested key generation, so don't do it for untargeted apps.
+@@ -815,14 +816,40 @@ public class TrickyStoreService {
+         maybeRefreshTargets();
+         for (String pkg : packages) {
+             if (XPOSED_PACKAGES.contains(pkg)) continue;
+-            Mode mode = mPackageModes.get(pkg);
+-            if (mode == Mode.SKIP) continue;
++            Mode mode = effectiveMode(pkg);
++            if (mode == null || mode == Mode.SKIP) continue;
+             if (mode == Mode.GENERATE) return true;
+             if (mode == Mode.AUTO && isTeeBroken()) return true;
+         }
+         return false;
+     }
+ 
++    /**
++     * Banking compatibility apps need the same attestation path as an explicit
++     * AUTO target. Paytm and similar payment apps generate their own Keystore
++     * keys and exit when TEE attestation is unprovisioned.
++     */
++    private Mode effectiveMode(String pkg) {
++        Mode mode = mPackageModes.get(pkg);
++        if (mode != null) {
++            return mode;
++        }
++        return isBankingCompatibilityEnabled(pkg) ? Mode.AUTO : null;
++    }
++
++    private static boolean isBankingCompatibilityEnabled(String pkg) {
++        if (pkg == null) {
++            return false;
++        }
++        try {
++            IActivityManager am = ActivityManager.getService();
++            return am != null && am.isSandboxSpoofSettingEnabled(pkg, "banking_compatibility",
++                    android.os.UserHandle.getCallingUserId());
++        } catch (RemoteException e) {
++            return false;
++        }
++    }
++
+     private void maybeRefreshTargets() {
+         long now = System.currentTimeMillis();
+         if (now - mLastTargetsRefreshMs >= TARGETS_REFRESH_COOLDOWN_MS) {
+diff --git a/services/core/java/com/android/server/am/BroadcastController.java b/services/core/java/com/android/server/am/BroadcastController.java
+index eb3f3e889..a9a68aad5 100644
+--- a/services/core/java/com/android/server/am/BroadcastController.java
++++ b/services/core/java/com/android/server/am/BroadcastController.java
+@@ -81,6 +81,7 @@ import android.content.pm.IPackageManager;
+ import android.content.pm.PackageManager;
+ import android.content.pm.ResolveInfo;
+ import android.content.pm.UserInfo;
++import android.hardware.usb.UsbManager;
+ import android.media.audiofx.AudioEffect;
+ import android.net.ConnectivityManager;
+ import android.net.Proxy;
+@@ -162,6 +163,8 @@ class BroadcastController {
+     // Maximum number of receivers an app can register.
+     private static final int MAX_RECEIVERS_ALLOWED_PER_APP = 1000;
+ 
++    private static final String BANKING_COMPATIBILITY = "banking_compatibility";
++
+     /**
+      * The number of top receivers/actions to dump when the number of receivers per app
+      * exceeds {@link #MAX_RECEIVERS_ALLOWED_PER_APP}.
+@@ -530,7 +533,9 @@ class BroadcastController {
+         }
+ 
+         // The first sticky in the list is returned directly back to the client.
+-        Intent sticky = allSticky != null ? allSticky.get(0).intent : null;
++        Intent sticky = allSticky != null
++                ? sanitizeUsbStateForPackage(allSticky.get(0).intent, callerPackage,
++                        mService) : null;
+         if (DEBUG_BROADCAST) Slog.v(TAG_BROADCAST, "Register receiver " + filter + ": " + sticky);
+         if (receiver == null) {
+             return sticky;
+@@ -619,7 +624,8 @@ class BroadcastController {
+                     if (sticky == null && (exported || originalStickyCallingUid == callingUid
+                             || ActivityManager.canAccessUnexportedComponents(
+                             originalStickyCallingUid))) {
+-                        sticky = broadcast.intent;
++                        sticky = sanitizeUsbStateForPackage(broadcast.intent, callerPackage,
++                                mService);
+                     }
+                     BroadcastQueue queue = mBroadcastQueue;
+                     BroadcastRecord r = new BroadcastRecord(queue, broadcast.intent, null, null,
+@@ -640,6 +646,46 @@ class BroadcastController {
+         }
+     }
+ 
++    /**
++     * Keep the real system USB state intact and specialize only the intent delivered to a package
++     * for which the user explicitly enabled the banking compatibility preset.
++     */
++    @VisibleForTesting
++    static Intent sanitizeUsbStateForPackage(Intent intent, String callerPackage,
++            boolean compatibilityEnabled) {
++        if (intent == null || callerPackage == null || !compatibilityEnabled
++                || !UsbManager.ACTION_USB_STATE.equals(intent.getAction())) {
++            return intent;
++        }
++
++        final Intent sanitized = new Intent(intent);
++        final Bundle extras = sanitized.getExtras();
++        if (extras != null) {
++            for (String key : new ArrayList<>(extras.keySet())) {
++                if (extras.get(key) instanceof Boolean) {
++                    extras.putBoolean(key, false);
++                }
++            }
++        }
++        return sanitized;
++    }
++
++    static Intent sanitizeUsbStateForPackage(Intent intent, String callerPackage,
++            ActivityManagerService service) {
++        // Avoid consulting the per-app sandbox for every non-USB broadcast.
++        final boolean compatibilityEnabled = intent != null
++                && UsbManager.ACTION_USB_STATE.equals(intent.getAction())
++                && isBankingCompatibilityEnabled(service, callerPackage);
++        return sanitizeUsbStateForPackage(intent, callerPackage, compatibilityEnabled);
++    }
++
++    static boolean isBankingCompatibilityEnabled(ActivityManagerService service,
++            String packageName) {
++        return service != null && packageName != null
++                && service.isSandboxSpoofSettingEnabled(packageName,
++                        BANKING_COMPATIBILITY, UserHandle.getCallingUserId());
++    }
++
+     @VisibleForTesting
+     String buildTooManyReceiversExceptionMessage(ReceiverList rl, String callerPackage) {
+         final HashMap<String, Integer> actionCounts = new HashMap<>();
+diff --git a/services/core/java/com/android/server/am/BroadcastRecord.java b/services/core/java/com/android/server/am/BroadcastRecord.java
+index bfd870048..bec365b55 100644
+--- a/services/core/java/com/android/server/am/BroadcastRecord.java
++++ b/services/core/java/com/android/server/am/BroadcastRecord.java
+@@ -730,9 +730,12 @@ final class BroadcastRecord extends Binder {
+      *         to it being filtered away by {@link #filterExtrasForReceiver}.
+      */
+     @Nullable Intent getReceiverIntent(@NonNull Object receiver) {
+-        Intent newIntent = null;
++        final String receiverPackage = getReceiverPackageName(receiver);
++        final Intent receiverIntent = BroadcastController.sanitizeUsbStateForPackage(intent,
++                receiverPackage, queue != null ? queue.mService : null);
++        Intent newIntent = receiverIntent != intent ? receiverIntent : null;
+         if (filterExtrasForReceiver != null) {
+-            final Bundle extras = intent.getExtras();
++            final Bundle extras = receiverIntent.getExtras();
+             if (extras != null) {
+                 final int receiverUid = getReceiverUid(receiver);
+                 final Bundle filteredExtras = filterExtrasForReceiver.apply(receiverUid, extras);
+@@ -740,18 +743,18 @@ final class BroadcastRecord extends Binder {
+                     // Completely filtered; skip the broadcast!
+                     return null;
+                 } else {
+-                    newIntent = new Intent(intent);
++                    newIntent = new Intent(receiverIntent);
+                     newIntent.replaceExtras(filteredExtras);
+                 }
+             }
+         }
+         if (receiver instanceof ResolveInfo) {
+             if (newIntent == null) {
+-                newIntent = new Intent(intent);
++                newIntent = new Intent(receiverIntent);
+             }
+             newIntent.setComponent(((ResolveInfo) receiver).activityInfo.getComponentName());
+         }
+-        return (newIntent != null) ? newIntent : intent;
++        return (newIntent != null) ? newIntent : receiverIntent;
+     }
+ 
+     static boolean isCallerInstrumented(@Nullable ProcessRecord callerApp, int callingUid) {
+-- 
+2.43.0
+

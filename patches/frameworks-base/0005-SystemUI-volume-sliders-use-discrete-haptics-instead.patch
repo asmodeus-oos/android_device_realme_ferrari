@@ -1,0 +1,53 @@
+From 44bbbe64395190f1364b320e5050a91573d4c46d Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Thu, 6 Aug 2026 19:58:33 +0000
+Subject: [PATCH 5/9] SystemUI: volume sliders: use discrete haptics instead of
+ continuous buzz
+
+Both volume sliders (the volume dialog and the new audio details panel) wired the MSDL slider haptics with VolumeHapticsConfigsProvider.continuousConfigs(), which plays a continuous drag texture while dragging - on this device it feels like the vibration motor stays on. Switch both to discreteConfigs() keyed to the stream's actual step size, matching the brightness slider which already got a ferrari-specific discrete config.
+---
+ .../panel/component/volume/ui/composable/VolumeSlider.kt  | 8 ++++++--
+ .../dialog/sliders/ui/VolumeDialogSliderViewBinder.kt     | 8 +++++++-
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SystemUI/compose/features/src/com/android/systemui/volume/panel/component/volume/ui/composable/VolumeSlider.kt b/packages/SystemUI/compose/features/src/com/android/systemui/volume/panel/component/volume/ui/composable/VolumeSlider.kt
+index 902b27c6e..e28aef480 100644
+--- a/packages/SystemUI/compose/features/src/com/android/systemui/volume/panel/component/volume/ui/composable/VolumeSlider.kt
++++ b/packages/SystemUI/compose/features/src/com/android/systemui/volume/panel/component/volume/ui/composable/VolumeSlider.kt
+@@ -180,8 +180,12 @@ fun VolumeSlider(
+                             Haptics.Enabled(
+                                 hapticsViewModelFactory = it,
+                                 hapticConfigs =
+-                                    VolumeHapticsConfigsProvider.continuousConfigs(
+-                                        state.hapticFilter
++                                    VolumeHapticsConfigsProvider.discreteConfigs(
++                                        stepSize =
++                                            state.step /
++                                                (state.valueRange.endInclusive -
++                                                    state.valueRange.start),
++                                        filter = state.hapticFilter,
+                                     ),
+                                 orientation = Orientation.Horizontal,
+                             )
+diff --git a/packages/SystemUI/src/com/android/systemui/volume/dialog/sliders/ui/VolumeDialogSliderViewBinder.kt b/packages/SystemUI/src/com/android/systemui/volume/dialog/sliders/ui/VolumeDialogSliderViewBinder.kt
+index 53f32f45d..72a215984 100644
+--- a/packages/SystemUI/src/com/android/systemui/volume/dialog/sliders/ui/VolumeDialogSliderViewBinder.kt
++++ b/packages/SystemUI/src/com/android/systemui/volume/dialog/sliders/ui/VolumeDialogSliderViewBinder.kt
+@@ -192,7 +192,13 @@ private fun VolumeDialogSlider(
+             Haptics.Enabled(
+                 hapticsViewModelFactory = hapticsViewModelFactory,
+                 hapticConfigs =
+-                    VolumeHapticsConfigsProvider.continuousConfigs(SliderHapticFeedbackFilter()),
++                    VolumeHapticsConfigsProvider.discreteConfigs(
++                        stepSize =
++                            1f /
++                                (sliderStateModel.valueRange.endInclusive -
++                                    sliderStateModel.valueRange.start),
++                        filter = SliderHapticFeedbackFilter(),
++                    ),
+                 orientation =
+                     if (isVolumeDialogVertical) {
+                         Orientation.Vertical
+-- 
+2.43.0
+

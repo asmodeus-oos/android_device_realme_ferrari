@@ -1,0 +1,127 @@
+From 66b2b2f273ac1eed0ec11db8f66e525994d68878 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Thu, 13 Aug 2026 14:00:00 +0000
+Subject: [PATCH 4/4] vibrator: calibrate predefined effects and tune LRA UI
+
+Calibrates SLA0815 X-axis LRA waveforms and gains.
+---
+ aidl/vibrator/qti/Vibrator.cpp | 69 ++++++++++++++++++++++++++++++----
+ 1 file changed, 61 insertions(+), 8 deletions(-)
+
+diff --git a/aidl/vibrator/qti/Vibrator.cpp b/aidl/vibrator/qti/Vibrator.cpp
+index 6b3e51f..d927977 100644
+--- a/aidl/vibrator/qti/Vibrator.cpp
++++ b/aidl/vibrator/qti/Vibrator.cpp
+@@ -309,19 +309,69 @@ int InputFFDevice::setAmplitude(uint8_t amplitude) {
+ }
+ 
+ int InputFFDevice::playEffect(int effectId, EffectStrength es, long* playLengthMs) {
++    // The SLA0815 is a powerful X-axis LRA and the FIFO waveforms already
++    // contain their own envelope. Driving every predefined effect at the old
++    // 50/75/100% gains makes short UI feedback feel like notification buzzes.
++    // Give each semantic effect a calibrated ceiling instead. Keep TICK at
++    // the proven 24/32/40% profile used by the brightness slider.
++    int lightPercent;
++    int mediumPercent;
++    int strongPercent;
++    switch (static_cast<Effect>(effectId)) {
++        case Effect::CLICK:
++            lightPercent = 26;
++            mediumPercent = 34;
++            strongPercent = 42;
++            break;
++        case Effect::DOUBLE_CLICK:
++            lightPercent = 24;
++            mediumPercent = 30;
++            strongPercent = 38;
++            break;
++        case Effect::TICK:
++            lightPercent = 24;
++            mediumPercent = 32;
++            strongPercent = 40;
++            break;
++        case Effect::THUD:
++            lightPercent = 30;
++            mediumPercent = 40;
++            strongPercent = 50;
++            break;
++        case Effect::POP:
++            lightPercent = 28;
++            mediumPercent = 38;
++            strongPercent = 46;
++            break;
++        case Effect::HEAVY_CLICK:
++            lightPercent = 34;
++            mediumPercent = 44;
++            strongPercent = 56;
++            break;
++        case Effect::TEXTURE_TICK:
++            lightPercent = 14;
++            mediumPercent = 18;
++            strongPercent = 24;
++            break;
++        default:
++            return -1;
++    }
++
++    int magnitudePercent;
+     switch (es) {
+         case EffectStrength::LIGHT:
+-            mCurrMagnitude = LIGHT_MAGNITUDE;
++            magnitudePercent = lightPercent;
+             break;
+         case EffectStrength::MEDIUM:
+-            mCurrMagnitude = MEDIUM_MAGNITUDE;
++            magnitudePercent = mediumPercent;
+             break;
+         case EffectStrength::STRONG:
+-            mCurrMagnitude = STRONG_MAGNITUDE;
++            magnitudePercent = strongPercent;
+             break;
+         default:
+             return -1;
+     }
++    mCurrMagnitude = (STRONG_MAGNITUDE * magnitudePercent) / 100;
+ 
+     return play(effectId, INVALID_VALUE, playLengthMs);
+ }
+@@ -478,11 +528,13 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength es,
+     if (ledVib.mDetected) {
+         switch (effect) {
+             case Effect::CLICK:
+-                ledVib.write_value(LED_DEVICE "/vmax", "2500");
++                // Short, crisp UI click for volume/charger events on the
++                // ferrari's X-axis LRA; keep TICK as the lighter slider step.
++                ledVib.write_value(LED_DEVICE "/vmax", "2000");
+                 ledVib.write_value(LED_DEVICE "/waveform_index", "1");
+                 break;
+             case Effect::DOUBLE_CLICK:
+-                ledVib.write_value(LED_DEVICE "/vmax", "2500");
++                ledVib.write_value(LED_DEVICE "/vmax", "2000");
+                 ledVib.write_value(LED_DEVICE "/waveform_index", "1");
+                 break;
+             case Effect::TICK:
+@@ -512,7 +564,8 @@ ndk::ScopedAStatus Vibrator::perform(Effect effect, EffectStrength es,
+         // Return magic value for play length so that we won't end up calling on() / off()
+         playLengthMs = 150;
+     } else {
+-        if (effect < Effect::CLICK || effect > Effect::HEAVY_CLICK)
++        if ((effect < Effect::CLICK || effect > Effect::HEAVY_CLICK) &&
++            effect != Effect::TEXTURE_TICK)
+             return ndk::ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
+ 
+         if (es != EffectStrength::LIGHT && es != EffectStrength::MEDIUM &&
+@@ -541,8 +594,8 @@ ndk::ScopedAStatus Vibrator::getSupportedEffects(std::vector<Effect>* _aidl_retu
+         *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK, Effect::HEAVY_CLICK,
+                          Effect::TEXTURE_TICK};
+     } else {
+-        *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK,
+-                         Effect::THUD,  Effect::POP,          Effect::HEAVY_CLICK};
++        *_aidl_return = {Effect::CLICK, Effect::DOUBLE_CLICK, Effect::TICK, Effect::THUD,
++                         Effect::POP,   Effect::HEAVY_CLICK,  Effect::TEXTURE_TICK};
+     }
+     return ndk::ScopedAStatus::ok();
+ }
+-- 
+2.43.0
+

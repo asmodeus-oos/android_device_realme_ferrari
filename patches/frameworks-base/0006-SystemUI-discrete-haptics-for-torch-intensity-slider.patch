@@ -1,0 +1,36 @@
+From bf669bd4466ce30686936b058eaffdb1760048f3 Mon Sep 17 00:00:00 2001
+From: Bubun Das <bubundas17@gmail.com>
+Date: Sat, 8 Aug 2026 14:39:45 +0000
+Subject: [PATCH 6/9] SystemUI: discrete haptics for torch intensity slider
+
+The torch slider falls back to the continuous rumble config; give it the
+same discrete tick feel as the brightness slider, with one click per
+torch strength level (25 levels -> step size 0.04).
+---
+ .../ui/composable/VerticalFlashlightSlider.kt          | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt b/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt
+index 95ad15a4e..778c529d1 100644
+--- a/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt
++++ b/packages/SystemUI/src/com/android/systemui/flashlight/ui/composable/VerticalFlashlightSlider.kt
+@@ -150,7 +150,15 @@ fun VerticalFlashlightSlider(
+                 floatValueRange,
+                 Orientation.Vertical,
+                 SliderHapticFeedbackConfig(
+-                    maxVelocityToScale = 1f /* slider progress(from 0 to 1) per sec */
++                    maxVelocityToScale = 1f /* slider progress(from 0 to 1) per sec */,
++                    progressBasedDragMinScale = 0.15f,
++                    progressBasedDragMaxScale = 0.30f,
++                    additionalVelocityMaxBump = 0.03f,
++                    deltaProgressForDragThreshold = 0.02f,
++                    numberOfLowTicks = 1,
++                    lowerBookendScale = 0.12f,
++                    upperBookendScale = 0.30f,
++                    sliderStepSize = 0.04f,
+                 ),
+                 SeekableSliderTrackerConfig(),
+             )
+-- 
+2.43.0
+

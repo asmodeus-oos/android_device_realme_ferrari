@@ -1,0 +1,73 @@
+From 524e391ffd2dc08bc08872f4df7879d11f9dad54 Mon Sep 17 00:00:00 2001
+From: Mohamed Elsayed <mohamed20020093@gmail.com>
+Date: Thu, 5 Nov 2026 04:52:10 +0000
+Subject: [PATCH 2/2] Settings: support maintainer url and github avatar on
+ unofficial builds
+
+---
+ res/values/evolution_strings.xml              |  2 ++
+ .../hardwareinfo/ModelPageController.java     | 27 ++++++++++++++++---
+ 2 files changed, 26 insertions(+), 3 deletions(-)
+
+diff --git a/res/values/evolution_strings.xml b/res/values/evolution_strings.xml
+index 76d0ade..2e3dc41 100644
+--- a/res/values/evolution_strings.xml
++++ b/res/values/evolution_strings.xml
+@@ -11,6 +11,8 @@
+     <string name="build_maintainer_label">Maintained by</string>
+     <string name="build_maintainer">Build maintainer</string>
+     <string name="build_maintainer_summary" translatable="false">Unknown</string>
++    <string name="build_maintainer_github" translatable="false"></string>
++    <string name="build_maintainer_url" translatable="false"></string>
+     <string name="build_maintainer_donate_url" translatable="false">https://linktr.ee/joeyhuab</string>
+     <string name="maintainer_link_github">GitHub profile</string>
+     <string name="maintainer_link_donate">Donate</string>
+diff --git a/src/com/android/settings/deviceinfo/hardwareinfo/ModelPageController.java b/src/com/android/settings/deviceinfo/hardwareinfo/ModelPageController.java
+index 7b1664d..4bb681d 100644
+--- a/src/com/android/settings/deviceinfo/hardwareinfo/ModelPageController.java
++++ b/src/com/android/settings/deviceinfo/hardwareinfo/ModelPageController.java
+@@ -1244,9 +1244,25 @@ public class ModelPageController extends BasePreferenceController {
+                 loadGithubAvatar(layoutPref, data.github);
+             }
+         } else {
+-            if (badgeView != null) badgeView.setVisibility(View.GONE);
++            final String overlayGithub = UrlUtils.trimToEmpty(
++                    mContext.getString(R.string.build_maintainer_github));
++            String overlayUrl = UrlUtils.trimToEmpty(
++                    mContext.getString(R.string.build_maintainer_url));
++            if (overlayUrl.isEmpty() && !overlayGithub.isEmpty()) {
++                overlayUrl = UrlUtils.buildGithubUrl(overlayGithub);
++            }
++            final String cardUrl = UrlUtils.sanitizeUrl(overlayUrl);
+             final String donateUrl = UrlUtils.sanitizeUrl(overlayDonateUrl);
+-            setupMaintainerActions(card, support, null, donateUrl);
++
++            if (badgeView != null) {
++                badgeView.setVisibility(!overlayGithub.isEmpty() ? View.VISIBLE : View.GONE);
++            }
++
++            setupMaintainerActions(card, support, cardUrl, donateUrl);
++
++            if (avatarView != null && !overlayGithub.isEmpty()) {
++                loadGithubAvatar(layoutPref, overlayGithub);
++            }
+         }
+ 
+         card.setVisibility(View.VISIBLE);
+@@ -1256,7 +1272,12 @@ public class ModelPageController extends BasePreferenceController {
+     private void loadGithubAvatar(LayoutPreference layoutPref, String username) {
+         ImageView av = layoutPref.findViewById(R.id.maintainer_avatar);
+         if (av == null) return;
+-        GithubAvatarLoader.getInstance().loadIntoImageView(mContext, av, username);
++        String cleanUser = UrlUtils.trimToEmpty(username)
++                .replace("https://github.com/", "")
++                .replace("http://github.com/", "")
++                .replaceAll("/+$", "");
++        if (cleanUser.isEmpty()) return;
++        GithubAvatarLoader.getInstance().loadIntoImageView(mContext, av, cleanUser);
+     }
+ 
+     /**
+-- 
+2.43.0
+
