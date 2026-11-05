@@ -1,4 +1,4 @@
-From fbd3eb9d37e12275010780bc2e84ec2638fa9a39 Mon Sep 17 00:00:00 2001
+From 30004dcdcee69fcaead6fd95219404147c8c9c2d Mon Sep 17 00:00:00 2001
 From: Bubun Das <bubundas17@gmail.com>
 Date: Fri, 7 Aug 2026 07:01:38 +0000
 Subject: [PATCH] leds: qti-flash: make torch brightness nodes world-writable
@@ -9,11 +9,11 @@ writing the LED brightness (interpreted as current in mA) directly. The
 LED class brightness node is root-only by default; relax it to 0666 for
 the torch LEDs.
 ---
- drivers/leds/leds-qti-flash.c | 20 ++++++++++++++++++--
- 1 file changed, 18 insertions(+), 2 deletions(-)
+ drivers/leds/leds-qti-flash.c | 26 ++++++++++++++++++++++++--
+ 1 file changed, 24 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/leds/leds-qti-flash.c b/drivers/leds/leds-qti-flash.c
-index 7b0a8097a04e..818692c15092 100644
+index 7b0a8097a04e..b85eced2acbb 100644
 --- a/drivers/leds/leds-qti-flash.c
 +++ b/drivers/leds/leds-qti-flash.c
 @@ -21,6 +21,7 @@
@@ -24,7 +24,7 @@ index 7b0a8097a04e..818692c15092 100644
  #include "leds.h"
  
  #define FLASH_LED_REVISION1			0x00
-@@ -1694,11 +1695,26 @@ static int register_flash_device(struct qti_flash_led *led,
+@@ -1694,11 +1695,32 @@ static int register_flash_device(struct qti_flash_led *led,
  	setting->val = SAFETY_TIMER_DEFAULT_TIMEOUT_MS * 1000;
  
  	rc = devm_led_classdev_flash_register(&led->pdev->dev, &fnode->fdev);
@@ -43,10 +43,16 @@ index 7b0a8097a04e..818692c15092 100644
 +	 * brightness node is root-only by default; relax it to 0666 for torch LEDs.
 +	 */
 +	if (fnode->type == FLASH_LED_TYPE_TORCH) {
-+		static struct device_attribute torch_brightness_attr =
-+			__ATTR(brightness, 0666, NULL, NULL);
-+		sysfs_chmod_file(&fnode->fdev.led_cdev.dev->kobj,
++		static struct device_attribute torch_brightness_attr = {
++			.attr = {
++				.name = "brightness",
++				.mode = 0666,
++			},
++		};
++		int chmod_rc = sysfs_chmod_file(&fnode->fdev.led_cdev.dev->kobj,
 +			&torch_brightness_attr.attr, 0666);
++		if (chmod_rc)
++			pr_warn("failed to chmod torch brightness: %d\n", chmod_rc);
 +	}
 +
 +	return 0;
