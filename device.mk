@@ -28,6 +28,7 @@ TARGET_SCREEN_WIDTH := 1440
 
 # Display
 PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/display/displayconfig.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_id_4630946358012694401.xml \
     $(LOCAL_PATH)/configs/display/displayconfig.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_id_4630946358012694402.xml
 
 $(call soong_config_set_bool,qtidisplay,oplus_udfps,true)
@@ -67,7 +68,13 @@ PRODUCT_PACKAGES += \
     OPlusFrameworksResTarget \
     OPlusSettingsProviderResTarget \
     OPlusSettingsResTarget \
-    OPlusSystemUIResTarget
+    OPlusSystemUIResTarget \
+    init.ferrari.perf.rc
+
+# Compressed RAM swap (ZRAM). Module is present in vendor_dlkm but not loaded
+# by default; init.ferrari.perf.rc modprobes it and swapon_all this fstab.
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/fstab.zram:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.zram
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
